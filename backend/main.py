@@ -1,625 +1,267 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import List, Dict, Any
-import re
-from datetime import datetime
-from transformers import pipeline
 import logging
+from typing import Dict, Any, List, Optional
+import re
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="BetterFriend NLP API", version="1.0.0")
-
-# Initialize Hugging Face models globally
-sentiment_analyzer = None
-emotion_analyzer = None
-
-@app.on_event("startup")
-async def load_models():
-    """Load Hugging Face models on startup"""
-    global sentiment_analyzer, emotion_analyzer
-    
-    try:
-        logger.info("Loading Hugging Face models...")
-        
-        # Load sentiment analysis model (RoBERTa-based, more accurate than basic models)
-        sentiment_analyzer = pipeline(
-            "sentiment-analysis",
-            model="cardiffnlp/twitter-roberta-base-sentiment-latest",
-            return_all_scores=True
-        )
-        
-        # Load emotion detection model
-        emotion_analyzer = pipeline(
-            "text-classification",
-            model="j-hartmann/emotion-english-distilroberta-base",
-            return_all_scores=True
-        )
-        
-        logger.info("Models loaded successfully!")
-        
-    except Exception as e:
-        logger.error(f"Error loading models: {e}")
-        # Fallback to basic models if advanced ones fail
-        try:
-            sentiment_analyzer = pipeline("sentiment-analysis", return_all_scores=True)
-            logger.info("Loaded basic sentiment model as fallback")
-        except Exception as fallback_error:
-            logger.error(f"Failed to load even basic models: {fallback_error}")
+app = FastAPI(title="BetterFriend NLP Backend", version="1.0.0")
 
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173", "https://localhost:5173"],
+    allow_origins=["http://localhost:5173", "https://localhost:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Request/Response models
+# Try to load Hugging Face models
+try:
+    from transformers import pipeline
+    
+    # Load sentiment analysis model
+    sentiment_analyzer = pipeline(
+        "sentiment-analysis",
+        model="cardiffnlp/twitter-roberta-base-sentiment-latest",
+        return_all_scores=True
+    )
+    
+    # Load emotion detection model
+    emotion_analyzer = pipeline(
+        "text-classification",
+        model="j-hartmann/emotion-english-distilroberta-base",
+        return_all_scores=True
+    )
+    
+    logger.info("Successfully loaded Hugging Face models")
+    MODELS_LOADED = True
+    
+except Exception as e:
+    logger.warning(f"Failed to load Hugging Face models: {e}")
+    logger.info("Falling back to rule-based analysis")
+    sentiment_analyzer = None
+    emotion_analyzer = None
+    MODELS_LOADED = False
+
 class ConversationRequest(BaseModel):
     text: str
-    goal: str
-
-class Message(BaseModel):
-    id: str
-    speaker: str
-    text: str
-    timestamp: str = None
-    isUser: bool = False
-
-class Highlight(BaseModel):
-    id: str
-    messageId: str
-    startIndex: int
-    endIndex: int
-    type: str
-    category: str
-    explanation: str
-    suggestion: str = None
-    originalText: str
-
-class NVCFramework(BaseModel):
-    observation: str
-    feeling: str
-    need: str
-    request: str
-
-class GottmanFramework(BaseModel):
-    bids: int
-    turning_toward: int
-    turning_away: int
-    turning_against: int
-    criticism: int
-    defensiveness: int
-    stonewalling: int
-    repair_attempts: int
-
-class Frameworks(BaseModel):
-    nvc: NVCFramework
-    gottman: GottmanFramework
-
-class Sentiment(BaseModel):
-    score: float
-    label: str
-
-class Analysis(BaseModel):
-    sentiment: Sentiment
-    tone: List[str]
-    frameworks: Frameworks
-    patterns: List[str]
-    risks: List[str]
-
-class Suggestion(BaseModel):
-    id: int
-    text: str
-    style: str
-    rationale: str
-    framework: str
+    goal: str = "general"
 
 class AnalysisResponse(BaseModel):
-    analysis: Analysis
-    suggestions: List[Suggestion]
-    highlights: List[Dict[str, Any]]
-    interactiveHighlights: List[Highlight]
-    parsedMessages: List[Message]
+    sentiment: Dict[str, Any]
+    tone: str
+    communication_patterns: List[str]
+    suggestions: List[str]
+    risk_level: str
+    emotions: Optional[Dict[str, Any]] = None
 
-# NLP Analysis Functions
-def parse_conversation(text: str) -> tuple[List[Message], float]:
-    """Parse conversation text into structured messages"""
-    lines = text.strip().split('\n')
-    messages = []
-    confidence = 0.0
-    message_id = 0
-    
-    # Enhanced patterns for conversation parsing
-    patterns = [
-        # WhatsApp: "[10:30 AM] John: Hey there"
-        (r'^\[([^\]]+)\]\s*([^:]+?):\s*(.+)$', 'WhatsApp', 0.9),
-        # Standard: "John: Hey there"
-        (r'^\b([^:]+?)\b\s*:\s*(.+)$', 'Standard', 0.8),
-        # Simple names: "Me: Hi" or "Friend: Hello"
-        (r'^(Me|You|Friend|Partner|Mom|Dad|Boss|[A-Z][a-z]{2,15}):\s*(.+)$', 'Simple', 0.6),
-    ]
-    
-    total_confidence = 0
-    pattern_matches = 0
-    
-    for line in lines:
-        line = line.strip()
-        if not line:
-            continue
-            
-        matched = False
-        for pattern, platform, conf in patterns:
-            match = re.match(pattern, line)
-            if match:
-                if len(match.groups()) == 3:  # WhatsApp format
-                    timestamp, speaker, text = match.groups()
-                    messages.append(Message(
-                        id=f"msg-{message_id}",
-                        speaker=speaker.strip(),
-                        text=text.strip(),
-                        timestamp=timestamp.strip(),
-                        isUser=speaker.strip().lower() in ['me', 'you', 'i']
-                    ))
-                else:  # Standard format
-                    speaker, text = match.groups()
-                    messages.append(Message(
-                        id=f"msg-{message_id}",
-                        speaker=speaker.strip(),
-                        text=text.strip(),
-                        isUser=speaker.strip().lower() in ['me', 'you', 'i']
-                    ))
-                
-                message_id += 1
-                total_confidence += conf
-                pattern_matches += 1
-                matched = True
-                break
-        
-        if not matched and messages:
-            # Treat as continuation of last message
-            if messages:
-                messages[-1].text += "\n" + line
-    
-    confidence = total_confidence / pattern_matches if pattern_matches > 0 else 0.0
-    return messages, confidence
-
-def analyze_sentiment(messages: List[Message]) -> Sentiment:
-    """Analyze overall sentiment of the conversation using Hugging Face models"""
-    global sentiment_analyzer
-    
-    if not sentiment_analyzer:
-        # Fallback to rule-based analysis if model not loaded
-        return analyze_sentiment_fallback(messages)
-    
+def analyze_with_huggingface(text: str) -> Dict[str, Any]:
+    """Analyze text using Hugging Face models"""
     try:
-        # Combine all messages into one text for overall sentiment
-        combined_text = " ".join([msg.text for msg in messages])
+        # Truncate text if too long (models have token limits)
+        max_length = 500
+        if len(text) > max_length:
+            text = text[:max_length]
         
-        # Limit text length to avoid model limits (most models have ~512 token limit)
-        if len(combined_text) > 2000:
-            combined_text = combined_text[:2000]
+        # Sentiment analysis
+        sentiment_results = sentiment_analyzer(text)
+        sentiment_scores = {result['label'].lower(): result['score'] for result in sentiment_results[0]}
         
-        # Get sentiment predictions
-        results = sentiment_analyzer(combined_text)
-        
-        # Handle different model output formats
-        if isinstance(results[0], list):
-            # Model returns all scores
-            scores = results[0]
-        else:
-            scores = results
-        
-        # Find the highest scoring sentiment
-        best_sentiment = max(scores, key=lambda x: x['score'])
-        
-        # Map model labels to our format
-        label_mapping = {
-            'POSITIVE': 'Positive',
-            'NEGATIVE': 'Negative', 
-            'NEUTRAL': 'Neutral',
-            'LABEL_0': 'Negative',  # Some models use LABEL_0/1/2
-            'LABEL_1': 'Neutral',
-            'LABEL_2': 'Positive'
+        # Map labels to standard format
+        sentiment_mapping = {
+            'label_0': 'negative',
+            'label_1': 'neutral', 
+            'label_2': 'positive'
         }
         
-        mapped_label = label_mapping.get(best_sentiment['label'], best_sentiment['label'])
+        mapped_sentiment = {}
+        for key, value in sentiment_scores.items():
+            mapped_key = sentiment_mapping.get(key, key)
+            mapped_sentiment[mapped_key] = value
         
-        # Convert score to our -1 to 1 scale
-        score = best_sentiment['score']
-        if mapped_label == 'Negative':
-            score = -score
-        elif mapped_label == 'Neutral':
-            score = 0.0
+        # Emotion analysis
+        emotion_results = emotion_analyzer(text)
+        emotion_scores = {result['label'].lower(): result['score'] for result in emotion_results[0]}
         
-        return Sentiment(score=score, label=mapped_label)
+        return {
+            'sentiment': mapped_sentiment,
+            'emotions': emotion_scores
+        }
         
     except Exception as e:
-        logger.error(f"Error in Hugging Face sentiment analysis: {e}")
-        # Fallback to rule-based analysis
-        return analyze_sentiment_fallback(messages)
+        logger.error(f"Error in Hugging Face analysis: {e}")
+        return None
 
-def analyze_sentiment_fallback(messages: List[Message]) -> Sentiment:
-    """Fallback rule-based sentiment analysis"""
-    positive_words = ['love', 'great', 'awesome', 'happy', 'good', 'thanks', 'appreciate', 'wonderful', 'amazing', 'perfect']
-    negative_words = ['hate', 'terrible', 'awful', 'sad', 'bad', 'angry', 'frustrated', 'disappointed', 'upset', 'horrible']
+def analyze_with_rules(text: str) -> Dict[str, Any]:
+    """Fallback rule-based analysis"""
+    text_lower = text.lower()
     
-    positive_count = 0
-    negative_count = 0
-    total_words = 0
+    # Simple sentiment analysis
+    positive_words = ['good', 'great', 'excellent', 'amazing', 'wonderful', 'fantastic', 'love', 'like', 'happy', 'pleased']
+    negative_words = ['bad', 'terrible', 'awful', 'hate', 'dislike', 'angry', 'frustrated', 'disappointed', 'sad', 'upset']
     
-    for message in messages:
-        words = message.text.lower().split()
-        total_words += len(words)
-        
-        for word in words:
-            if word in positive_words:
-                positive_count += 1
-            elif word in negative_words:
-                negative_count += 1
+    positive_count = sum(1 for word in positive_words if word in text_lower)
+    negative_count = sum(1 for word in negative_words if word in text_lower)
     
-    if total_words == 0:
-        return Sentiment(score=0.0, label="Neutral")
-    
-    score = (positive_count - negative_count) / max(total_words, 1)
-    
-    if score > 0.1:
-        label = "Positive" if score > 0.3 else "Slightly Positive"
-    elif score < -0.1:
-        label = "Negative" if score < -0.3 else "Slightly Negative"
+    if positive_count > negative_count:
+        sentiment = {'positive': 0.7, 'neutral': 0.2, 'negative': 0.1}
+    elif negative_count > positive_count:
+        sentiment = {'positive': 0.1, 'neutral': 0.2, 'negative': 0.7}
     else:
-        label = "Neutral"
+        sentiment = {'positive': 0.3, 'neutral': 0.4, 'negative': 0.3}
     
-    return Sentiment(score=score, label=label)
-
-def detect_communication_patterns(messages: List[Message]) -> tuple[List[str], List[str], List[str]]:
-    """Detect communication patterns, tone, and risks with enhanced NLP"""
-    global emotion_analyzer
-    
-    patterns = []
-    tones = []
-    risks = []
-    
-    question_count = 0
-    appreciation_count = 0
-    defensive_count = 0
-    detected_emotions = []
-    
-    for message in messages:
-        text = message.text.lower()
-        
-        # Count questions (bids for connection)
-        if '?' in message.text:
-            question_count += 1
-        
-        # Count appreciation
-        if any(word in text for word in ['thank', 'appreciate', 'grateful']):
-            appreciation_count += 1
-        
-        # Count defensive language
-        if any(phrase in text for phrase in ['but ', 'however', 'actually']):
-            defensive_count += 1
-        
-        # Use Hugging Face emotion detection if available
-        if emotion_analyzer and len(message.text.strip()) > 10:
-            try:
-                emotion_results = emotion_analyzer(message.text)
-                if isinstance(emotion_results[0], list):
-                    emotions = emotion_results[0]
-                else:
-                    emotions = emotion_results
-                
-                # Get top emotion with confidence > 0.3
-                top_emotion = max(emotions, key=lambda x: x['score'])
-                if top_emotion['score'] > 0.3:
-                    detected_emotions.append(top_emotion['label'])
-            except Exception as e:
-                logger.error(f"Error in emotion detection: {e}")
-    
-    # Generate patterns
-    if question_count > 0:
-        patterns.append(f"{question_count} questions detected - shows curiosity")
-    if appreciation_count > 0:
-        patterns.append(f"{appreciation_count} expressions of gratitude found")
-    
-    # Add emotion-based patterns
-    if detected_emotions:
-        emotion_counts = {}
-        for emotion in detected_emotions:
-            emotion_counts[emotion] = emotion_counts.get(emotion, 0) + 1
-        
-        most_common_emotion = max(emotion_counts.items(), key=lambda x: x[1])
-        if most_common_emotion[1] > 1:
-            patterns.append(f"Recurring {most_common_emotion[0]} emotion detected")
-    
-    # Generate tones
-    if question_count > len(messages) * 0.3:
-        tones.append("Curious")
-    if appreciation_count > 0:
-        tones.append("Appreciative")
-    if defensive_count > 0:
-        tones.append("Defensive")
-    
-    # Add emotion-based tones
-    if detected_emotions:
-        unique_emotions = list(set(detected_emotions))
-        for emotion in unique_emotions[:2]:  # Limit to top 2 emotions
-            if emotion not in ['neutral']:
-                tones.append(emotion.capitalize())
-    
-    if not tones:
-        tones.append("Conversational")
-    
-    # Generate risks
-    if defensive_count > 0:
-        risks.append("Defensive language detected - consider using 'and' instead of 'but'")
-    
-    # Add emotion-based risks
-    negative_emotions = ['anger', 'sadness', 'fear', 'disgust']
-    if any(emotion in detected_emotions for emotion in negative_emotions):
-        risks.append("Strong negative emotions detected - consider taking a pause before responding")
-    
-    return patterns, tones, risks
-
-def analyze_frameworks(messages: List[Message]) -> Frameworks:
-    """Analyze using NVC and Gottman frameworks"""
-    # Simple analysis - in production, this would be much more sophisticated
-    bids = sum(1 for msg in messages if '?' in msg.text or any(word in msg.text.lower() for word in ['how', 'what', 'tell me']))
-    
-    # Count positive vs negative responses
-    turning_toward = sum(1 for msg in messages if any(word in msg.text.lower() for word in ['yes', 'sure', 'sounds good', 'i\'d love']))
-    turning_away = sum(1 for msg in messages if msg.text.lower().strip() in ['ok', 'fine', 'maybe'])
-    turning_against = sum(1 for msg in messages if any(word in msg.text.lower() for word in ['no', 'can\'t', 'don\'t want']))
-    
-    # Four Horsemen detection
-    criticism = sum(1 for msg in messages if any(phrase in msg.text.lower() for phrase in ['you always', 'you never']))
-    defensiveness = sum(1 for msg in messages if any(phrase in msg.text.lower() for phrase in ['that\'s not true', 'i never said']))
-    stonewalling = sum(1 for msg in messages if any(phrase in msg.text.lower() for phrase in ['whatever', 'i\'m done']))
-    repair_attempts = sum(1 for msg in messages if any(phrase in msg.text.lower() for phrase in ['i\'m sorry', 'let me try again']))
-    
-    nvc = NVCFramework(
-        observation=f"{len(messages)} messages exchanged with {bids} connection attempts",
-        feeling="Mixed emotional tone detected" if len(messages) > 3 else "Brief exchange",
-        need="Understanding and connection",
-        request="Continue building positive communication patterns"
-    )
-    
-    gottman = GottmanFramework(
-        bids=bids,
-        turning_toward=turning_toward,
-        turning_away=turning_away,
-        turning_against=turning_against,
-        criticism=criticism,
-        defensiveness=defensiveness,
-        stonewalling=stonewalling,
-        repair_attempts=repair_attempts
-    )
-    
-    return Frameworks(nvc=nvc, gottman=gottman)
-
-def generate_highlights(messages: List[Message]) -> List[Highlight]:
-    """Generate interactive highlights for the conversation"""
-    highlights = []
-    highlight_id = 0
-    
-    for message in messages:
-        text = message.text.lower()
-        original_text = message.text
-        
-        # Detect bids for connection (questions)
-        if '?' in original_text:
-            question_start = original_text.find('?')
-            # Find the start of the question
-            question_start = max(0, original_text.rfind(' ', 0, question_start) + 1)
-            highlights.append(Highlight(
-                id=f"highlight-{highlight_id}",
-                messageId=message.id,
-                startIndex=question_start,
-                endIndex=original_text.find('?') + 1,
-                type="bid",
-                category="Question Bid",
-                explanation="This question is a 'bid' for connection - an attempt to engage and learn more.",
-                suggestion="Great question! Follow up with active listening to their response.",
-                originalText=original_text[question_start:original_text.find('?') + 1]
-            ))
-            highlight_id += 1
-        
-        # Detect appreciation
-        appreciation_words = ['thank', 'appreciate', 'grateful']
-        for word in appreciation_words:
-            if word in text:
-                start_idx = text.find(word)
-                end_idx = start_idx + len(word)
-                highlights.append(Highlight(
-                    id=f"highlight-{highlight_id}",
-                    messageId=message.id,
-                    startIndex=start_idx,
-                    endIndex=end_idx,
-                    type="opportunity",
-                    category="Appreciation",
-                    explanation="Expressing gratitude strengthens relationships and creates positive connection.",
-                    suggestion="Beautiful gratitude! This kind of appreciation strengthens relationships.",
-                    originalText=original_text[start_idx:end_idx]
-                ))
-                highlight_id += 1
-                break
-        
-        # Detect defensive language
-        defensive_phrases = ['but ', 'however', 'actually']
-        for phrase in defensive_phrases:
-            if phrase in text:
-                start_idx = text.find(phrase)
-                end_idx = start_idx + len(phrase)
-                highlights.append(Highlight(
-                    id=f"highlight-{highlight_id}",
-                    messageId=message.id,
-                    startIndex=start_idx,
-                    endIndex=end_idx,
-                    type="concern",
-                    category="Defensive Language",
-                    explanation="This language pattern might create distance or defensiveness.",
-                    suggestion="Try: 'I hear you, and I also think...' instead of 'but' to sound less dismissive.",
-                    originalText=original_text[start_idx:end_idx]
-                ))
-                highlight_id += 1
-                break
-    
-    return highlights
-
-def generate_suggestions(goal: str, messages: List[Message], analysis: Analysis) -> List[Suggestion]:
-    """Generate personalized suggestions based on goal and analysis"""
-    suggestions = []
-    
-    goal_suggestions = {
-        'reconnect': [
-            Suggestion(
-                id=1,
-                text="I've been thinking about you and wanted to check in. How have you been feeling lately?",
-                style="warm",
-                rationale="Shows care and opens space for emotional connection",
-                framework="Gottman Method"
-            ),
-            Suggestion(
-                id=2,
-                text="I really value our relationship and want to make sure we're good. Can we talk?",
-                style="direct",
-                rationale="Direct but caring approach that prioritizes the relationship",
-                framework="NVC"
-            )
-        ],
-        'clarify': [
-            Suggestion(
-                id=1,
-                text="I want to make sure I understand what you're saying. Can you help me see this from your perspective?",
-                style="curious",
-                rationale="Shows genuine interest in understanding rather than being right",
-                framework="NVC"
-            ),
-            Suggestion(
-                id=2,
-                text="I think we might be seeing this differently. Let me share what I heard and you can correct me if I'm off.",
-                style="collaborative",
-                rationale="Invites collaboration and shows willingness to be wrong",
-                framework="Gottman Method"
-            )
-        ],
-        'apologize': [
-            Suggestion(
-                id=1,
-                text="I realize I hurt you with what I said/did, and I'm truly sorry. That wasn't my intention, but I understand the impact.",
-                style="accountable",
-                rationale="Takes responsibility without making excuses",
-                framework="Gottman Repair"
-            ),
-            Suggestion(
-                id=2,
-                text="I messed up and I want to make this right. What do you need from me?",
-                style="direct",
-                rationale="Shows accountability and asks how to repair",
-                framework="NVC"
-            )
-        ],
-        'boundary': [
-            Suggestion(
-                id=1,
-                text="I care about our relationship, and I need to share something that's important to me.",
-                style="caring",
-                rationale="Frames boundary-setting as caring for the relationship",
-                framework="NVC"
-            )
-        ],
-        'conflict': [
-            Suggestion(
-                id=1,
-                text="I can see this is really important to you. Help me understand what you need right now.",
-                style="validating",
-                rationale="Validates their experience and seeks to understand",
-                framework="De-escalation"
-            )
-        ]
+    # Simple emotion detection
+    emotions = {
+        'joy': 0.3 if positive_count > 0 else 0.1,
+        'anger': 0.3 if 'angry' in text_lower or 'mad' in text_lower else 0.1,
+        'sadness': 0.3 if 'sad' in text_lower or 'disappointed' in text_lower else 0.1,
+        'fear': 0.2,
+        'surprise': 0.2,
+        'disgust': 0.1
     }
     
-    # Get goal-specific suggestions
-    if goal in goal_suggestions:
-        suggestions.extend(goal_suggestions[goal])
+    return {
+        'sentiment': sentiment,
+        'emotions': emotions
+    }
+
+def determine_tone(sentiment: Dict[str, float], emotions: Dict[str, float]) -> str:
+    """Determine overall tone based on sentiment and emotions"""
+    if sentiment['positive'] > 0.6:
+        return "positive"
+    elif sentiment['negative'] > 0.6:
+        return "negative"
+    elif emotions and emotions.get('anger', 0) > 0.5:
+        return "aggressive"
+    elif emotions and emotions.get('sadness', 0) > 0.5:
+        return "melancholic"
+    else:
+        return "neutral"
+
+def identify_patterns(text: str, sentiment: Dict[str, float], emotions: Dict[str, float]) -> List[str]:
+    """Identify communication patterns"""
+    patterns = []
+    text_lower = text.lower()
     
-    # Add pattern-based suggestions
-    if analysis.frameworks.gottman.criticism > 0:
-        suggestions.append(Suggestion(
-            id=len(suggestions) + 1,
-            text="I feel [emotion] when [specific behavior happens]. I need [specific need].",
-            style="structured",
-            rationale="Uses 'I' statements to express concerns without attacking character",
-            framework="Gottman Method - Avoiding Criticism"
-        ))
+    # Check for question patterns
+    if '?' in text:
+        patterns.append("asking_questions")
     
-    return suggestions[:4]  # Limit to 4 suggestions
+    # Check for emotional language
+    if sentiment['negative'] > 0.5:
+        patterns.append("negative_language")
+    
+    if emotions and emotions.get('anger', 0) > 0.4:
+        patterns.append("aggressive_tone")
+    
+    # Check for empathy indicators
+    empathy_words = ['understand', 'feel', 'sorry', 'empathize', 'relate']
+    if any(word in text_lower for word in empathy_words):
+        patterns.append("empathetic_language")
+    
+    # Check for defensive language
+    defensive_words = ['but', 'however', 'actually', 'well', 'i mean']
+    if any(word in text_lower for word in defensive_words):
+        patterns.append("defensive_language")
+    
+    return patterns
+
+def generate_suggestions(patterns: List[str], tone: str, goal: str) -> List[str]:
+    """Generate improvement suggestions"""
+    suggestions = []
+    
+    if "negative_language" in patterns:
+        suggestions.append("Try to reframe negative statements in a more constructive way")
+    
+    if "aggressive_tone" in patterns:
+        suggestions.append("Consider using softer language to avoid escalating tension")
+    
+    if "defensive_language" in patterns:
+        suggestions.append("Try to listen actively before responding defensively")
+    
+    if tone == "negative":
+        suggestions.append("Consider acknowledging the other person's perspective")
+    
+    if goal == "conflict_resolution":
+        suggestions.append("Focus on finding common ground and shared solutions")
+    
+    if not suggestions:
+        suggestions.append("Your communication style looks good! Keep being authentic.")
+    
+    return suggestions
+
+def assess_risk_level(sentiment: Dict[str, float], emotions: Dict[str, float], patterns: List[str]) -> str:
+    """Assess risk level of the conversation"""
+    risk_score = 0
+    
+    # High negative sentiment increases risk
+    if sentiment['negative'] > 0.7:
+        risk_score += 2
+    
+    # Aggressive emotions increase risk
+    if emotions and emotions.get('anger', 0) > 0.6:
+        risk_score += 2
+    
+    # Certain patterns increase risk
+    high_risk_patterns = ["aggressive_tone", "defensive_language"]
+    risk_score += sum(1 for pattern in patterns if pattern in high_risk_patterns)
+    
+    if risk_score >= 3:
+        return "high"
+    elif risk_score >= 1:
+        return "medium"
+    else:
+        return "low"
 
 @app.get("/")
-async def root():
-    return {"message": "BetterFriend NLP API is running"}
+async def health_check():
+    return {
+        "status": "healthy",
+        "models_loaded": MODELS_LOADED,
+        "message": "BetterFriend NLP Backend is running"
+    }
 
 @app.post("/analyze", response_model=AnalysisResponse)
 async def analyze_conversation(request: ConversationRequest):
     try:
-        # Parse the conversation
-        messages, confidence = parse_conversation(request.text)
+        text = request.text.strip()
+        if not text:
+            raise HTTPException(status_code=400, detail="Text cannot be empty")
         
-        if not messages:
-            raise HTTPException(status_code=400, detail="Could not parse any messages from the conversation")
+        # Try Hugging Face analysis first, fall back to rules
+        if MODELS_LOADED:
+            analysis_result = analyze_with_huggingface(text)
+            if analysis_result is None:
+                analysis_result = analyze_with_rules(text)
+        else:
+            analysis_result = analyze_with_rules(text)
         
-        # Analyze sentiment
-        sentiment = analyze_sentiment(messages)
+        sentiment = analysis_result['sentiment']
+        emotions = analysis_result.get('emotions', {})
         
-        # Detect patterns
-        patterns, tones, risks = detect_communication_patterns(messages)
-        
-        # Analyze frameworks
-        frameworks = analyze_frameworks(messages)
-        
-        # Generate highlights
-        interactive_highlights = generate_highlights(messages)
-        
-        # Create analysis object
-        analysis = Analysis(
-            sentiment=sentiment,
-            tone=tones,
-            frameworks=frameworks,
-            patterns=patterns,
-            risks=risks
-        )
-        
-        # Generate suggestions
-        suggestions = generate_suggestions(request.goal, messages, analysis)
-        
-        # Generate simple highlights for the highlights component
-        highlights = []
-        for i, msg in enumerate(messages[:3]):  # Limit to first 3 messages
-            if '?' in msg.text:
-                highlights.append({
-                    "id": f"highlight-{i}",
-                    "text": msg.text,
-                    "speaker": msg.speaker,
-                    "type": "opportunity",
-                    "category": "Question Bid",
-                    "explanation": "This question shows curiosity and interest in connecting."
-                })
+        # Determine tone and patterns
+        tone = determine_tone(sentiment, emotions)
+        patterns = identify_patterns(text, sentiment, emotions)
+        suggestions = generate_suggestions(patterns, tone, request.goal)
+        risk_level = assess_risk_level(sentiment, emotions, patterns)
         
         return AnalysisResponse(
-            analysis=analysis,
+            sentiment=sentiment,
+            tone=tone,
+            communication_patterns=patterns,
             suggestions=suggestions,
-            highlights=highlights,
-            interactiveHighlights=interactive_highlights,
-            parsedMessages=messages
+            risk_level=risk_level,
+            emotions=emotions
         )
         
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+        logger.error(f"Error analyzing conversation: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 if __name__ == "__main__":
     import uvicorn
