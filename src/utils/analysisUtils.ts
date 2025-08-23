@@ -207,7 +207,10 @@ export const analyzeConversation = async (
   };
 
   // Generate suggestions based on the goal and detected patterns
-  const suggestions = generateSuggestions(currentGoal, interactiveHighlights, analysis);
+  const suggestions = generateSuggestions(currentGoal, interactiveHighlights, analysis, {
+    turningAway,
+    turningAgainst
+  });
 
   // Generate highlights based on the parsed conversation
   const conversationHighlights = generateHighlights(parsedMessages, analysis);
@@ -221,7 +224,7 @@ export const analyzeConversation = async (
   };
 };
 
-const generateSuggestions = (goal: string, highlights: any[], analysis: any) => {
+const generateSuggestions = (goal: string, highlights: any[], analysis: any, counts?: { turningAway: number; turningAgainst: number }) => {
   const suggestions = [];
   let suggestionId = 1;
   
@@ -381,7 +384,7 @@ const generateSuggestions = (goal: string, highlights: any[], analysis: any) => 
     });
   }
   
-  if (analysis.frameworks.gottman.turning_away > analysis.frameworks.gottman.turning_toward) {
+  if ((counts?.turningAway || analysis.frameworks.gottman.turning_away) > analysis.frameworks.gottman.turning_toward) {
     suggestions.push({
       id: suggestionId++,
       text: "I want to give this the attention it deserves. Can you help me understand why this matters to you?",
