@@ -230,7 +230,10 @@ const InteractiveConversation = ({ messages, highlights, suggestions = [] }: Int
             <span>Concern</span>
           </div>
         </div>
-        <p className="text-xs text-gray-500 mt-2">Hover over highlighted text to see suggestions</p>
+        <div className="mt-3 text-xs text-gray-600">
+          <p className="mb-2"><strong>Growth Opportunity:</strong> Positive communication patterns that strengthen relationships (like expressing gratitude, showing empathy, or making repair attempts)</p>
+          <p><strong>Tip:</strong> Hover over any highlighted text to see detailed explanations and suggestions</p>
+        </div>
       </div>
 
       {/* Conversation Messages */}
