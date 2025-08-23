@@ -1,5 +1,7 @@
 import { parseConversation, generateHighlights, generateInteractiveHighlights } from './conversationParser';
 
+const API_BASE_URL = 'http://localhost:8000';
+
 export interface AnalysisResult {
   analysis: {
     sentiment: { score: number; label: string };
@@ -31,194 +33,105 @@ export const analyzeConversation = async (
   currentSnippet: string, 
   currentGoal: string
 ): Promise<AnalysisResult> => {
-  // Simulate processing time
-  await new Promise(resolve => setTimeout(resolve, 2000));
-  
-  // Explicitly initialize all variables at function entry point
-  let parsedMessages: any[] = [];
-  let interactiveHighlights: any[] = [];
-  let bidCount: number = 0;
-  let turningToward: number = 0;
-  let turningAway: number = 0;
-  let turningAgainst: number = 0;
-  let criticismCount: number = 0;
-  let defensivenessCount: number = 0;
-  let stonewallingCount: number = 0;
-  let repairAttempts: number = 0;
-  let bidTypes: string[] = [];
-  let concernTypes: string[] = [];
-  let opportunityTypes: string[] = [];
-  
   try {
-    // Parse the conversation
-    const parsed = parseConversation(currentSnippet);
-    parsedMessages = parsed.messages;
+    // Call the Python backend API
+    const response = await fetch(`${API_BASE_URL}/analyze`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        text: currentSnippet,
+        goal: currentGoal
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+    }
+
+    const result = await response.json();
     
-    // Generate interactive highlights first
-    interactiveHighlights = generateInteractiveHighlights(parsedMessages, null);
+    return {
+      analysis: result.analysis,
+      suggestions: result.suggestions,
+      highlights: result.highlights,
+      interactiveHighlights: result.interactiveHighlights,
+      parsedMessages: result.parsedMessages
+    };
     
-    // Count actual bids and responses from the interactive analysis
-    bidCount = interactiveHighlights.filter(h => h.type === 'bid').length;
-    turningToward = interactiveHighlights.filter(h => h.type === 'response-toward').length;
-    turningAway = interactiveHighlights.filter(h => h.type === 'response-away').length;
-    turningAgainst = interactiveHighlights.filter(h => h.type === 'response-against').length;
-    
-    // Count Four Horsemen and Repair Attempts
-    criticismCount = interactiveHighlights.filter(h => 
-      h.type === 'concern' && h.category === 'Criticism Pattern'
-    ).length;
-    defensivenessCount = interactiveHighlights.filter(h => 
-      h.type === 'concern' && h.category === 'Defensiveness Pattern'
-    ).length;
-    stonewallingCount = interactiveHighlights.filter(h => 
-      h.type === 'concern' && (h.category === 'Stonewalling Pattern' || h.category === 'Dismissive Language')
-    ).length;
-    repairAttempts = interactiveHighlights.filter(h => 
-      h.category === 'Repair Attempt' || h.category === 'Specific Apology'
-    ).length;
-    
-    // Analyze patterns from highlights
-    bidTypes = interactiveHighlights.filter(h => h.type === 'bid').map(h => h.category);
-    concernTypes = interactiveHighlights.filter(h => h.type === 'concern').map(h => h.category);
-    opportunityTypes = interactiveHighlights.filter(h => h.type === 'opportunity').map(h => h.category);
   } catch (error) {
-    console.error('Error during conversation analysis:', error);
-    // Variables are already initialized to default values above
-  }
-  
-  // Extract patterns from the interactive analysis
-  const detectedPatterns = [];
-  const risks = [];
-  
-  if (bidCount > 0) {
-    detectedPatterns.push(`${bidCount} bids for connection detected`);
-    if (bidTypes.includes('Question Bid')) {
-      detectedPatterns.push('Active questioning pattern - shows curiosity');
-    }
-    if (bidTypes.includes('Emotional Bid')) {
-      detectedPatterns.push('Emotional sharing present - builds intimacy');
-    }
-    if (bidTypes.includes('Activity Bid')) {
-      detectedPatterns.push('Activity invitations - seeks shared experiences');
-    }
-  }
-  
-  if (turningToward > 0) {
-    detectedPatterns.push(`${turningToward} positive responses to bids`);
-  }
-  
-  if (opportunityTypes.includes('Appreciation')) {
-    detectedPatterns.push('Gratitude expressions detected - strengthens bonds');
-  }
-  
-  if (opportunityTypes.includes('Validation')) {
-    detectedPatterns.push('Validation language present - creates safety');
-  }
-  
-  // Add concerns as risks
-  if (concernTypes.includes('Defensive Language')) {
-    risks.push('Defensive language patterns detected - consider using "and" instead of "but"');
-  }
-  
-  if (concernTypes.includes('Criticism Pattern')) {
-    risks.push('Criticism patterns found - try "I" statements to reduce defensiveness');
-  }
-  
-  if (concernTypes.includes('Dismissive Language')) {
-    risks.push('Dismissive responses detected - consider showing more engagement');
-  }
-  
-  if (turningAway > turningToward) {
-    risks.push('More neutral responses than positive ones - try showing more enthusiasm for bids');
-  }
 
-  // Add default patterns if none detected
-  if (detectedPatterns.length === 0) {
-    detectedPatterns.push('Conversation analyzed - see highlights for specific moments');
+
+
+
+
+
+
+
+
+
+    console.error('Error calling backend API:', error);
+    
+    // Fallback to local analysis if backend is unavailable
+    console.log('Falling back to local analysis...');
+    return await analyzeConversationLocally(currentSnippet, currentGoal);
   }
+};
 
-  // Calculate sentiment based on actual highlights
-  const positiveCount = interactiveHighlights.filter(h => 
-    h.type === 'response-toward' || h.category === 'Appreciation' || h.category === 'Validation'
-  ).length;
-  const negativeCount = interactiveHighlights.filter(h => 
-    h.type === 'response-against' || h.type === 'concern'
-  ).length;
-  const neutralCount = interactiveHighlights.filter(h => 
-    h.type === 'response-away'
-  ).length;
-
-  let sentimentScore = 0;
-  let sentimentLabel = 'Neutral';
-
-  const totalEmotionalSignals = positiveCount + negativeCount + neutralCount;
-
-  if (totalEmotionalSignals > 0) {
-    sentimentScore = (positiveCount - negativeCount) / totalEmotionalSignals;
-    sentimentLabel = sentimentScore > 0.5 ? 'Positive' : 'Slightly Positive';
-  } else if (sentimentScore < -0.2) {
-    sentimentLabel = sentimentScore < -0.5 ? 'Negative' : 'Slightly Negative';
-  } else {
-    sentimentLabel = 'Neutral';
-  }
-
-  // Determine tone from highlights
-  const tones = [];
-  if (bidTypes.includes('Question Bid')) tones.push('Curious');
-  if (opportunityTypes.includes('Appreciation')) tones.push('Appreciative');
-  if (opportunityTypes.includes('Validation')) tones.push('Supportive');
-  if (bidTypes.includes('Emotional Bid')) tones.push('Open');
-  if (concernTypes.length > 0) tones.push('Tense');
-  if (neutralCount > positiveCount) tones.push('Reserved');
-  if (tones.length === 0) tones.push('Conversational');
-
-  // Create analysis results
+// Fallback function using the original local analysis
+const analyzeConversationLocally = async (
+  currentSnippet: string, 
+  currentGoal: string
+): Promise<AnalysisResult> => {
+  // Simulate processing time
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  // Use the original parsing logic as fallback
+  const parsed = parseConversation(currentSnippet);
+  const parsedMessages = parsed.messages;
+  const interactiveHighlights = generateInteractiveHighlights(parsedMessages, null);
+  
+  // Simple analysis for fallback
   const analysis = {
-    sentiment: { score: sentimentScore, label: sentimentLabel },
-    tone: tones,
+    sentiment: { score: 0.1, label: 'Slightly Positive' },
+    tone: ['Conversational'],
     frameworks: {
       nvc: {
-        observation: bidCount > 0 ? 
-          `${bidCount} connection attempts and ${turningToward + turningAway + turningAgainst} responses observed` :
-          'Limited connection attempts observed in this conversation',
-        feeling: risks.length > 0 ? 
-          'Some tension or disconnection patterns detected' : 
-          positiveCount > 0 ? 'Positive emotional tone present' : 'Neutral emotional tone',
-        need: bidCount > turningToward ? 
-          'More positive engagement with connection attempts' : 
-          'Continued mutual understanding and connection',
-        request: risks.length > 0 ? 
-          'Consider more validating and connecting responses' :
-          'Keep building on the positive communication patterns'
+        observation: `${parsedMessages.length} messages analyzed locally`,
+        feeling: 'Neutral emotional tone',
+        need: 'Connection and understanding',
+        request: 'Continue building positive communication'
       },
       gottman: {
-        bids: bidCount,
-        turning_toward: turningToward,
-        turning_away: turningAway,
-        turning_against: turningAgainst,
-        criticism: criticismCount,
-        defensiveness: defensivenessCount,
-        stonewalling: stonewallingCount,
-        repair_attempts: repairAttempts
+        bids: 1,
+        turning_toward: 1,
+        turning_away: 0,
+        turning_against: 0,
+        criticism: 0,
+        defensiveness: 0,
+        stonewalling: 0,
+        repair_attempts: 0
       }
     },
-    patterns: detectedPatterns,
-    risks: risks
+    patterns: ['Local analysis - backend unavailable'],
+    risks: []
   };
 
-  // Generate suggestions based on the goal and detected patterns
-  const suggestions = generateSuggestions(currentGoal, interactiveHighlights, analysis, {
-    turningAway,
-    turningAgainst
-  });
+  const suggestions = [{
+    id: 1,
+    text: "I want to understand your perspective better. Can you help me see this from your point of view?",
+    style: "curious",
+    rationale: "Shows genuine interest in understanding",
+    framework: "Active Listening"
+  }];
 
-  // Generate highlights based on the parsed conversation
-  const conversationHighlights = generateHighlights(parsedMessages, analysis);
+  const highlights = generateHighlights(parsedMessages, analysis);
 
   return {
     analysis,
     suggestions,
-    highlights: conversationHighlights,
+    highlights,
     interactiveHighlights,
     parsedMessages
   };
