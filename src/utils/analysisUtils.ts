@@ -34,17 +34,17 @@ export const analyzeConversation = async (
   // Simulate processing time
   await new Promise(resolve => setTimeout(resolve, 2000));
   
-  // Initialize default values
+  // Explicitly initialize all variables at function entry point
   let parsedMessages: any[] = [];
   let interactiveHighlights: any[] = [];
-  let bidCount = 0;
-  let turningToward = 0;
-  let turningAway = 0;
-  let turningAgainst = 0;
-  let criticismCount = 0;
-  let defensivenessCount = 0;
-  let stonewallingCount = 0;
-  let repairAttempts = 0;
+  let bidCount: number = 0;
+  let turningToward: number = 0;
+  let turningAway: number = 0;
+  let turningAgainst: number = 0;
+  let criticismCount: number = 0;
+  let defensivenessCount: number = 0;
+  let stonewallingCount: number = 0;
+  let repairAttempts: number = 0;
   let bidTypes: string[] = [];
   let concernTypes: string[] = [];
   let opportunityTypes: string[] = [];
