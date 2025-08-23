@@ -228,6 +228,16 @@ const generateSuggestions = (goal: string, highlights: any[], analysis: any, cou
   const suggestions = [];
   let suggestionId = 1;
   
+  // Safely initialize all count variables with default values
+  const turningAwayCount = counts?.turningAway ?? analysis?.frameworks?.gottman?.turning_away ?? 0;
+  const turningAgainstCount = counts?.turningAgainst ?? analysis?.frameworks?.gottman?.turning_against ?? 0;
+  const turningTowardCount = analysis?.frameworks?.gottman?.turning_toward ?? 0;
+  const criticismCount = analysis?.frameworks?.gottman?.criticism ?? 0;
+  const defensivenessCount = analysis?.frameworks?.gottman?.defensiveness ?? 0;
+  const stonewallingCount = analysis?.frameworks?.gottman?.stonewalling ?? 0;
+  const repairAttemptsCount = analysis?.frameworks?.gottman?.repair_attempts ?? 0;
+  const bidsCount = analysis?.frameworks?.gottman?.bids ?? 0;
+  
   // Goal-based suggestions
   const goalSuggestions = {
     'reconnect': [
@@ -324,7 +334,7 @@ const generateSuggestions = (goal: string, highlights: any[], analysis: any, cou
   }
   
   // Add suggestions based on Four Horsemen detection
-  if (analysis.frameworks.gottman.criticism > 0) {
+  if (criticismCount > 0) {
     suggestions.push({
       id: suggestionId++,
       text: "I feel [emotion] when [specific behavior happens]. I need [specific need].",
@@ -334,7 +344,7 @@ const generateSuggestions = (goal: string, highlights: any[], analysis: any, cou
     });
   }
   
-  if (analysis.frameworks.gottman.defensiveness > 0) {
+  if (defensivenessCount > 0) {
     suggestions.push({
       id: suggestionId++,
       text: "You're right that I contributed to this. Let me take responsibility for my part.",
@@ -344,7 +354,7 @@ const generateSuggestions = (goal: string, highlights: any[], analysis: any, cou
     });
   }
   
-  if (analysis.frameworks.gottman.stonewalling > 0) {
+  if (stonewallingCount > 0) {
     suggestions.push({
       id: suggestionId++,
       text: "I'm feeling overwhelmed and need a 20-minute break to collect my thoughts. Then I'd like to continue this conversation.",
@@ -354,7 +364,7 @@ const generateSuggestions = (goal: string, highlights: any[], analysis: any, cou
     });
   }
   
-  if (analysis.frameworks.gottman.repair_attempts === 0 && (turningAway > 0 || turningAgainst > 0)) {
+  if (repairAttemptsCount === 0 && (turningAwayCount > 0 || turningAgainstCount > 0)) {
     suggestions.push({
       id: suggestionId++,
       text: "I can see this conversation isn't going well. Can we pause and try a different approach?",
@@ -364,7 +374,7 @@ const generateSuggestions = (goal: string, highlights: any[], analysis: any, cou
     });
   }
   
-  if (bidHighlights.length > 0 && analysis.frameworks.gottman.turning_toward === 0) {
+  if (bidHighlights.length > 0 && turningTowardCount === 0) {
     suggestions.push({
       id: suggestionId++,
       text: "That sounds really interesting! Tell me more about that.",
@@ -374,7 +384,7 @@ const generateSuggestions = (goal: string, highlights: any[], analysis: any, cou
     });
   }
   
-  if (analysis.frameworks.gottman.repair_attempts === 0 && (analysis.frameworks.gottman.turning_away > 0 || analysis.frameworks.gottman.turning_against > 0)) {
+  if (repairAttemptsCount === 0 && (turningAwayCount > 0 || turningAgainstCount > 0)) {
     suggestions.push({
       id: suggestionId++,
       text: "I can see this conversation isn't going well. Can we pause and try a different approach?",
@@ -384,7 +394,7 @@ const generateSuggestions = (goal: string, highlights: any[], analysis: any, cou
     });
   }
   
-  if ((counts?.turningAway || analysis.frameworks.gottman.turning_away) > analysis.frameworks.gottman.turning_toward) {
+  if (turningAwayCount > turningTowardCount) {
     suggestions.push({
       id: suggestionId++,
       text: "I want to give this the attention it deserves. Can you help me understand why this matters to you?",
