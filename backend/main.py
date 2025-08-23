@@ -4,8 +4,51 @@ from pydantic import BaseModel
 from typing import List, Dict, Any
 import re
 from datetime import datetime
+from transformers import pipeline
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = FastAPI(title="BetterFriend NLP API", version="1.0.0")
+
+# Initialize Hugging Face models globally
+sentiment_analyzer = None
+emotion_analyzer = None
+
+@app.on_event("startup")
+async def load_models():
+    """Load Hugging Face models on startup"""
+    global sentiment_analyzer, emotion_analyzer
+    
+    try:
+        logger.info("Loading Hugging Face models...")
+        
+        # Load sentiment analysis model (RoBERTa-based, more accurate than basic models)
+        sentiment_analyzer = pipeline(
+            "sentiment-analysis",
+            model="cardiffnlp/twitter-roberta-base-sentiment-latest",
+            return_all_scores=True
+        )
+        
+        # Load emotion detection model
+        emotion_analyzer = pipeline(
+            "text-classification",
+            model="j-hartmann/emotion-english-distilroberta-base",
+            return_all_scores=True
+        )
+        
+        logger.info("Models loaded successfully!")
+        
+    except Exception as e:
+        logger.error(f"Error loading models: {e}")
+        # Fallback to basic models if advanced ones fail
+        try:
+            sentiment_analyzer = pipeline("sentiment-analysis", return_all_scores=True)
+            logger.info("Loaded basic sentiment model as fallback")
+        except Exception as fallback_error:
+            logger.error(f"Failed to load even basic models: {fallback_error}")
 
 # Configure CORS
 app.add_middleware(
@@ -147,8 +190,62 @@ def parse_conversation(text: str) -> tuple[List[Message], float]:
     return messages, confidence
 
 def analyze_sentiment(messages: List[Message]) -> Sentiment:
-    """Analyze overall sentiment of the conversation"""
-    # Simple rule-based sentiment analysis
+    """Analyze overall sentiment of the conversation using Hugging Face models"""
+    global sentiment_analyzer
+    
+    if not sentiment_analyzer:
+        # Fallback to rule-based analysis if model not loaded
+        return analyze_sentiment_fallback(messages)
+    
+    try:
+        # Combine all messages into one text for overall sentiment
+        combined_text = " ".join([msg.text for msg in messages])
+        
+        # Limit text length to avoid model limits (most models have ~512 token limit)
+        if len(combined_text) > 2000:
+            combined_text = combined_text[:2000]
+        
+        # Get sentiment predictions
+        results = sentiment_analyzer(combined_text)
+        
+        # Handle different model output formats
+        if isinstance(results[0], list):
+            # Model returns all scores
+            scores = results[0]
+        else:
+            scores = results
+        
+        # Find the highest scoring sentiment
+        best_sentiment = max(scores, key=lambda x: x['score'])
+        
+        # Map model labels to our format
+        label_mapping = {
+            'POSITIVE': 'Positive',
+            'NEGATIVE': 'Negative', 
+            'NEUTRAL': 'Neutral',
+            'LABEL_0': 'Negative',  # Some models use LABEL_0/1/2
+            'LABEL_1': 'Neutral',
+            'LABEL_2': 'Positive'
+        }
+        
+        mapped_label = label_mapping.get(best_sentiment['label'], best_sentiment['label'])
+        
+        # Convert score to our -1 to 1 scale
+        score = best_sentiment['score']
+        if mapped_label == 'Negative':
+            score = -score
+        elif mapped_label == 'Neutral':
+            score = 0.0
+        
+        return Sentiment(score=score, label=mapped_label)
+        
+    except Exception as e:
+        logger.error(f"Error in Hugging Face sentiment analysis: {e}")
+        # Fallback to rule-based analysis
+        return analyze_sentiment_fallback(messages)
+
+def analyze_sentiment_fallback(messages: List[Message]) -> Sentiment:
+    """Fallback rule-based sentiment analysis"""
     positive_words = ['love', 'great', 'awesome', 'happy', 'good', 'thanks', 'appreciate', 'wonderful', 'amazing', 'perfect']
     negative_words = ['hate', 'terrible', 'awful', 'sad', 'bad', 'angry', 'frustrated', 'disappointed', 'upset', 'horrible']
     
@@ -181,7 +278,9 @@ def analyze_sentiment(messages: List[Message]) -> Sentiment:
     return Sentiment(score=score, label=label)
 
 def detect_communication_patterns(messages: List[Message]) -> tuple[List[str], List[str], List[str]]:
-    """Detect communication patterns, tone, and risks"""
+    """Detect communication patterns, tone, and risks with enhanced NLP"""
+    global emotion_analyzer
+    
     patterns = []
     tones = []
     risks = []
@@ -189,6 +288,7 @@ def detect_communication_patterns(messages: List[Message]) -> tuple[List[str], L
     question_count = 0
     appreciation_count = 0
     defensive_count = 0
+    detected_emotions = []
     
     for message in messages:
         text = message.text.lower()
@@ -204,12 +304,38 @@ def detect_communication_patterns(messages: List[Message]) -> tuple[List[str], L
         # Count defensive language
         if any(phrase in text for phrase in ['but ', 'however', 'actually']):
             defensive_count += 1
+        
+        # Use Hugging Face emotion detection if available
+        if emotion_analyzer and len(message.text.strip()) > 10:
+            try:
+                emotion_results = emotion_analyzer(message.text)
+                if isinstance(emotion_results[0], list):
+                    emotions = emotion_results[0]
+                else:
+                    emotions = emotion_results
+                
+                # Get top emotion with confidence > 0.3
+                top_emotion = max(emotions, key=lambda x: x['score'])
+                if top_emotion['score'] > 0.3:
+                    detected_emotions.append(top_emotion['label'])
+            except Exception as e:
+                logger.error(f"Error in emotion detection: {e}")
     
     # Generate patterns
     if question_count > 0:
         patterns.append(f"{question_count} questions detected - shows curiosity")
     if appreciation_count > 0:
         patterns.append(f"{appreciation_count} expressions of gratitude found")
+    
+    # Add emotion-based patterns
+    if detected_emotions:
+        emotion_counts = {}
+        for emotion in detected_emotions:
+            emotion_counts[emotion] = emotion_counts.get(emotion, 0) + 1
+        
+        most_common_emotion = max(emotion_counts.items(), key=lambda x: x[1])
+        if most_common_emotion[1] > 1:
+            patterns.append(f"Recurring {most_common_emotion[0]} emotion detected")
     
     # Generate tones
     if question_count > len(messages) * 0.3:
@@ -218,12 +344,25 @@ def detect_communication_patterns(messages: List[Message]) -> tuple[List[str], L
         tones.append("Appreciative")
     if defensive_count > 0:
         tones.append("Defensive")
+    
+    # Add emotion-based tones
+    if detected_emotions:
+        unique_emotions = list(set(detected_emotions))
+        for emotion in unique_emotions[:2]:  # Limit to top 2 emotions
+            if emotion not in ['neutral']:
+                tones.append(emotion.capitalize())
+    
     if not tones:
         tones.append("Conversational")
     
     # Generate risks
     if defensive_count > 0:
         risks.append("Defensive language detected - consider using 'and' instead of 'but'")
+    
+    # Add emotion-based risks
+    negative_emotions = ['anger', 'sadness', 'fear', 'disgust']
+    if any(emotion in detected_emotions for emotion in negative_emotions):
+        risks.append("Strong negative emotions detected - consider taking a pause before responding")
     
     return patterns, tones, risks
 
