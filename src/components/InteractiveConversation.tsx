@@ -278,38 +278,19 @@ const InteractiveConversation = ({ messages, highlights, suggestions = [] }: Int
             {hoveredHighlightData.explanation}
           </p>
 
-          {(hoveredHighlightData.suggestion || getSuggestionForHighlight(hoveredHighlightData)) && (
+          {hoveredHighlightData.suggestion && (
             <div className="border-t border-gray-200 pt-3">
               <p className="text-xs font-medium text-gray-700 mb-2">
-                {hoveredHighlightData.type === 'opportunity' || hoveredHighlightData.type === 'bid' ? 'Great job!' : 'Suggested improvement:'}
+                {hoveredHighlightData.type === 'opportunity' || hoveredHighlightData.type === 'bid' || hoveredHighlightData.type === 'response-toward' ? 'Great job!' : 'Suggested improvement:'}
               </p>
               <div className="bg-blue-50 rounded p-2 mb-2">
                 <p className="text-xs text-blue-800 italic">
-                  "{hoveredHighlightData.suggestion || getSuggestionForHighlight(hoveredHighlightData)}"
+                  "{hoveredHighlightData.suggestion}"
                 </p>
               </div>
               <button
-                onClick={() => handleCopySuggestion(hoveredHighlightData.suggestion || getSuggestionForHighlight(hoveredHighlightData) || '')}
+                onClick={() => handleCopySuggestion(hoveredHighlightData.suggestion)}
                 className="flex items-center space-x-1 text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 transition-colors"
-              >
-                <Copy className="w-3 h-3" />
-                <span>Copy</span>
-              </button>
-            </div>
-          )}
-          
-          {/* Show general suggestions if no specific one exists */}
-          {!hoveredHighlightData.suggestion && !getSuggestionForHighlight(hoveredHighlightData) && suggestions.length > 0 && (
-            <div className="border-t border-gray-200 pt-3">
-              <p className="text-xs font-medium text-gray-700 mb-2">General suggestion:</p>
-              <div className="bg-green-50 rounded p-2 mb-2">
-                <p className="text-xs text-green-800 italic">
-                  "{suggestions[0].text}"
-                </p>
-              </div>
-              <button
-                onClick={() => handleCopySuggestion(suggestions[0].text)}
-                className="flex items-center space-x-1 text-xs bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700 transition-colors"
               >
                 <Copy className="w-3 h-3" />
                 <span>Copy</span>
