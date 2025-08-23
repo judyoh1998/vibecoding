@@ -53,12 +53,11 @@ class ConversationRequest(BaseModel):
     goal: str = "general"
 
 class AnalysisResponse(BaseModel):
-    sentiment: Dict[str, Any]
-    tone: str
-    communication_patterns: List[str]
-    suggestions: List[str]
-    risk_level: str
-    emotions: Optional[Dict[str, Any]] = None
+    analysis: Dict[str, Any]
+    suggestions: List[Dict[str, Any]]
+    highlights: List[Dict[str, Any]]
+    interactiveHighlights: List[Dict[str, Any]]
+    parsedMessages: List[Dict[str, Any]]
 
 def analyze_with_huggingface(text: str) -> Dict[str, Any]:
     """Analyze text using Hugging Face models"""
@@ -130,93 +129,229 @@ def analyze_with_rules(text: str) -> Dict[str, Any]:
         'emotions': emotions
     }
 
-def determine_tone(sentiment: Dict[str, float], emotions: Dict[str, float]) -> str:
-    """Determine overall tone based on sentiment and emotions"""
-    if sentiment['positive'] > 0.6:
-        return "positive"
-    elif sentiment['negative'] > 0.6:
-        return "negative"
-    elif emotions and emotions.get('anger', 0) > 0.5:
-        return "aggressive"
-    elif emotions and emotions.get('sadness', 0) > 0.5:
-        return "melancholic"
-    else:
-        return "neutral"
+def parse_conversation(text: str):
+    """Simple conversation parser"""
+    lines = text.strip().split('\n')
+    messages = []
+    message_id = 0
+    
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+            
+        # Try to detect speaker patterns
+        if ':' in line:
+            parts = line.split(':', 1)
+            if len(parts) == 2:
+                speaker = parts[0].strip()
+                message_text = parts[1].strip()
+                messages.append({
+                    'id': f'msg-{message_id}',
+                    'speaker': speaker,
+                    'text': message_text,
+                    'isUser': speaker.lower() in ['me', 'i', 'you']
+                })
+                message_id += 1
+    
+    return messages
 
-def identify_patterns(text: str, sentiment: Dict[str, float], emotions: Dict[str, float]) -> List[str]:
-    """Identify communication patterns"""
+def generate_analysis(text: str, goal: str):
+    """Generate comprehensive analysis"""
+    # Get sentiment and emotion analysis
+    if MODELS_LOADED:
+        analysis_result = analyze_with_huggingface(text)
+        if analysis_result is None:
+            analysis_result = analyze_with_rules(text)
+    else:
+        analysis_result = analyze_with_rules(text)
+    
+    sentiment = analysis_result['sentiment']
+    emotions = analysis_result.get('emotions', {})
+    
+    # Determine sentiment label
+    if sentiment['positive'] > sentiment['negative'] and sentiment['positive'] > sentiment['neutral']:
+        sentiment_label = 'Positive'
+        sentiment_score = sentiment['positive']
+    elif sentiment['negative'] > sentiment['positive'] and sentiment['negative'] > sentiment['neutral']:
+        sentiment_label = 'Negative'
+        sentiment_score = -sentiment['negative']
+    else:
+        sentiment_label = 'Neutral'
+        sentiment_score = 0
+    
+    # Generate tone analysis
+    tone = []
+    if sentiment['positive'] > 0.6:
+        tone.append('Positive')
+    if sentiment['negative'] > 0.6:
+        tone.append('Negative')
+    if emotions.get('anger', 0) > 0.4:
+        tone.append('Frustrated')
+    if emotions.get('joy', 0) > 0.4:
+        tone.append('Happy')
+    if not tone:
+        tone.append('Neutral')
+    
+    # Generate patterns
     patterns = []
     text_lower = text.lower()
-    
-    # Check for question patterns
     if '?' in text:
-        patterns.append("asking_questions")
+        patterns.append('Asking questions - shows curiosity and engagement')
+    if any(word in text_lower for word in ['thank', 'appreciate', 'grateful']):
+        patterns.append('Expressing gratitude - builds positive connection')
+    if any(word in text_lower for word in ['sorry', 'apologize']):
+        patterns.append('Taking responsibility - shows accountability')
+    if any(word in text_lower for word in ['feel', 'feeling']):
+        patterns.append('Sharing emotions - creates vulnerability and connection')
     
-    # Check for emotional language
-    if sentiment['negative'] > 0.5:
-        patterns.append("negative_language")
+    # Generate risks
+    risks = []
+    if sentiment['negative'] > 0.7:
+        risks.append('High negative sentiment detected - consider taking a break if emotions are running high')
+    if any(word in text_lower for word in ['always', 'never']):
+        risks.append('Absolute language detected - try using "sometimes" or "often" instead')
+    if any(word in text_lower for word in ['but', 'however']):
+        risks.append('Defensive language patterns - consider using "and" instead of "but"')
     
-    if emotions and emotions.get('anger', 0) > 0.4:
-        patterns.append("aggressive_tone")
-    
-    # Check for empathy indicators
-    empathy_words = ['understand', 'feel', 'sorry', 'empathize', 'relate']
-    if any(word in text_lower for word in empathy_words):
-        patterns.append("empathetic_language")
-    
-    # Check for defensive language
-    defensive_words = ['but', 'however', 'actually', 'well', 'i mean']
-    if any(word in text_lower for word in defensive_words):
-        patterns.append("defensive_language")
-    
-    return patterns
+    return {
+        'sentiment': {
+            'score': sentiment_score,
+            'label': sentiment_label
+        },
+        'tone': tone,
+        'frameworks': {
+            'nvc': {
+                'observation': f'Analysis of {len(text.split())} words of conversation',
+                'feeling': f'Overall emotional tone appears {sentiment_label.lower()}',
+                'need': 'Connection and understanding between participants',
+                'request': 'Continue practicing mindful communication'
+            },
+            'gottman': {
+                'bids': 1 if '?' in text else 0,
+                'turning_toward': 1 if sentiment['positive'] > 0.5 else 0,
+                'turning_away': 1 if sentiment['neutral'] > 0.5 else 0,
+                'turning_against': 1 if sentiment['negative'] > 0.5 else 0,
+                'criticism': 1 if any(word in text_lower for word in ['always', 'never']) else 0,
+                'defensiveness': 1 if any(word in text_lower for word in ['but', 'however']) else 0,
+                'stonewalling': 0,
+                'repair_attempts': 1 if 'sorry' in text_lower else 0
+            }
+        },
+        'patterns': patterns,
+        'risks': risks
+    }
 
-def generate_suggestions(patterns: List[str], tone: str, goal: str) -> List[str]:
-    """Generate improvement suggestions"""
+def generate_suggestions(goal: str, analysis: dict):
+    """Generate contextual suggestions"""
     suggestions = []
     
-    if "negative_language" in patterns:
-        suggestions.append("Try to reframe negative statements in a more constructive way")
+    goal_suggestions = {
+        'reconnect': [
+            {
+                'id': 1,
+                'text': "I've been thinking about you and wanted to check in. How have you been feeling lately?",
+                'style': 'warm',
+                'rationale': 'Shows care and opens space for emotional connection',
+                'framework': 'Gottman Method'
+            }
+        ],
+        'clarify': [
+            {
+                'id': 1,
+                'text': "I want to make sure I understand what you're saying. Can you help me see this from your perspective?",
+                'style': 'curious',
+                'rationale': 'Shows genuine interest in understanding rather than being right',
+                'framework': 'NVC'
+            }
+        ],
+        'apologize': [
+            {
+                'id': 1,
+                'text': "I realize I hurt you with what I said/did, and I'm truly sorry. That wasn't my intention, but I understand the impact.",
+                'style': 'accountable',
+                'rationale': 'Takes responsibility without making excuses',
+                'framework': 'Gottman Repair'
+            }
+        ]
+    }
     
-    if "aggressive_tone" in patterns:
-        suggestions.append("Consider using softer language to avoid escalating tension")
-    
-    if "defensive_language" in patterns:
-        suggestions.append("Try to listen actively before responding defensively")
-    
-    if tone == "negative":
-        suggestions.append("Consider acknowledging the other person's perspective")
-    
-    if goal == "conflict_resolution":
-        suggestions.append("Focus on finding common ground and shared solutions")
-    
-    if not suggestions:
-        suggestions.append("Your communication style looks good! Keep being authentic.")
+    if goal in goal_suggestions:
+        suggestions.extend(goal_suggestions[goal])
+    else:
+        suggestions.append({
+            'id': 1,
+            'text': "I want to understand your perspective better. Can you help me see this from your point of view?",
+            'style': 'curious',
+            'rationale': 'Shows genuine interest in understanding',
+            'framework': 'Active Listening'
+        })
     
     return suggestions
 
-def assess_risk_level(sentiment: Dict[str, float], emotions: Dict[str, float], patterns: List[str]) -> str:
-    """Assess risk level of the conversation"""
-    risk_score = 0
+def generate_highlights(messages: list):
+    """Generate conversation highlights"""
+    highlights = []
+    highlight_id = 0
     
-    # High negative sentiment increases risk
-    if sentiment['negative'] > 0.7:
-        risk_score += 2
+    for message in messages:
+        text = message['text'].lower()
+        
+        # Check for positive patterns
+        if any(word in text for word in ['thank', 'appreciate', 'love']):
+            highlights.append({
+                'id': f'highlight-{highlight_id}',
+                'text': message['text'],
+                'speaker': message['speaker'],
+                'type': 'positive',
+                'category': 'Appreciation',
+                'explanation': 'Expressing gratitude strengthens relationships and creates positive connection.'
+            })
+            highlight_id += 1
+        
+        # Check for questions (bids for connection)
+        if '?' in message['text']:
+            highlights.append({
+                'id': f'highlight-{highlight_id}',
+                'text': message['text'],
+                'speaker': message['speaker'],
+                'type': 'opportunity',
+                'category': 'Bid for Connection',
+                'explanation': 'Questions are "bids" for connection. Responding positively builds relationship strength.'
+            })
+            highlight_id += 1
     
-    # Aggressive emotions increase risk
-    if emotions and emotions.get('anger', 0) > 0.6:
-        risk_score += 2
+    return highlights
+
+def generate_interactive_highlights(messages: list):
+    """Generate interactive highlights with positions"""
+    highlights = []
+    highlight_id = 0
     
-    # Certain patterns increase risk
-    high_risk_patterns = ["aggressive_tone", "defensive_language"]
-    risk_score += sum(1 for pattern in patterns if pattern in high_risk_patterns)
+    for message in messages:
+        text = message['text']
+        text_lower = text.lower()
+        
+        # Find appreciation words
+        appreciation_words = ['thank', 'thanks', 'appreciate']
+        for word in appreciation_words:
+            if word in text_lower:
+                start_index = text_lower.find(word)
+                highlights.append({
+                    'id': f'highlight-{highlight_id}',
+                    'messageId': message['id'],
+                    'startIndex': start_index,
+                    'endIndex': start_index + len(word),
+                    'type': 'opportunity',
+                    'category': 'Appreciation',
+                    'explanation': 'Expressing gratitude strengthens relationships',
+                    'suggestion': 'Continue showing appreciation for specific things they do',
+                    'originalText': text[start_index:start_index + len(word)]
+                })
+                highlight_id += 1
+                break
     
-    if risk_score >= 3:
-        return "high"
-    elif risk_score >= 1:
-        return "medium"
-    else:
-        return "low"
+    return highlights
 
 @app.get("/")
 async def health_check():
@@ -233,30 +368,25 @@ async def analyze_conversation(request: ConversationRequest):
         if not text:
             raise HTTPException(status_code=400, detail="Text cannot be empty")
         
-        # Try Hugging Face analysis first, fall back to rules
-        if MODELS_LOADED:
-            analysis_result = analyze_with_huggingface(text)
-            if analysis_result is None:
-                analysis_result = analyze_with_rules(text)
-        else:
-            analysis_result = analyze_with_rules(text)
+        # Parse conversation
+        messages = parse_conversation(text)
         
-        sentiment = analysis_result['sentiment']
-        emotions = analysis_result.get('emotions', {})
+        # Generate analysis
+        analysis = generate_analysis(text, request.goal)
         
-        # Determine tone and patterns
-        tone = determine_tone(sentiment, emotions)
-        patterns = identify_patterns(text, sentiment, emotions)
-        suggestions = generate_suggestions(patterns, tone, request.goal)
-        risk_level = assess_risk_level(sentiment, emotions, patterns)
+        # Generate suggestions
+        suggestions = generate_suggestions(request.goal, analysis)
+        
+        # Generate highlights
+        highlights = generate_highlights(messages)
+        interactive_highlights = generate_interactive_highlights(messages)
         
         return AnalysisResponse(
-            sentiment=sentiment,
-            tone=tone,
-            communication_patterns=patterns,
+            analysis=analysis,
             suggestions=suggestions,
-            risk_level=risk_level,
-            emotions=emotions
+            highlights=highlights,
+            interactiveHighlights=interactive_highlights,
+            parsedMessages=messages
         )
         
     except Exception as e:
