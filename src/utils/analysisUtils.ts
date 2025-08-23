@@ -1,7 +1,5 @@
 import { parseConversation, generateHighlights, generateInteractiveHighlights } from './conversationParser';
 
-const API_BASE_URL = 'http://localhost:8000';
-
 export interface AnalysisResult {
   analysis: {
     sentiment: { score: number; label: string };
@@ -18,6 +16,10 @@ export interface AnalysisResult {
         turning_toward: number;
         turning_away: number;
         turning_against: number;
+        criticism: number;
+        defensiveness: number;
+        stonewalling: number;
+        repair_attempts: number;
       };
     };
     patterns: string[];
@@ -33,100 +35,22 @@ export const analyzeConversation = async (
   currentSnippet: string, 
   currentGoal: string
 ): Promise<AnalysisResult> => {
-  try {
-    // Call the Python backend API
-    const response = await fetch(`${API_BASE_URL}/analyze`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        text: currentSnippet,
-        goal: currentGoal
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error(`API request failed: ${response.status} ${response.statusText}`);
-    }
-
-    const result = await response.json();
-    
-    return {
-      analysis: result.analysis,
-      suggestions: result.suggestions,
-      highlights: result.highlights,
-      interactiveHighlights: result.interactiveHighlights,
-      parsedMessages: result.parsedMessages
-    };
-    
-  } catch (error) {
-
-
-
-
-
-
-
-
-
-
-    console.error('Error calling backend API:', error);
-    
-    // Fallback to local analysis if backend is unavailable
-    console.log('Falling back to local analysis...');
-    return await analyzeConversationLocally(currentSnippet, currentGoal);
-  }
-};
-
-// Fallback function using the original local analysis
-const analyzeConversationLocally = async (
-  currentSnippet: string, 
-  currentGoal: string
-): Promise<AnalysisResult> => {
-  // Simulate processing time
-  await new Promise(resolve => setTimeout(resolve, 1000));
+  // Simulate processing time for better UX
+  await new Promise(resolve => setTimeout(resolve, 1500));
   
-  // Use the original parsing logic as fallback
+  // Parse the conversation
   const parsed = parseConversation(currentSnippet);
   const parsedMessages = parsed.messages;
-  const interactiveHighlights = generateInteractiveHighlights(parsedMessages, null);
   
-  // Simple analysis for fallback
-  const analysis = {
-    sentiment: { score: 0.1, label: 'Slightly Positive' },
-    tone: ['Conversational'],
-    frameworks: {
-      nvc: {
-        observation: `${parsedMessages.length} messages analyzed locally`,
-        feeling: 'Neutral emotional tone',
-        need: 'Connection and understanding',
-        request: 'Continue building positive communication'
-      },
-      gottman: {
-        bids: 1,
-        turning_toward: 1,
-        turning_away: 0,
-        turning_against: 0,
-        criticism: 0,
-        defensiveness: 0,
-        stonewalling: 0,
-        repair_attempts: 0
-      }
-    },
-    patterns: ['Local analysis - backend unavailable'],
-    risks: []
-  };
-
-  const suggestions = [{
-    id: 1,
-    text: "I want to understand your perspective better. Can you help me see this from your point of view?",
-    style: "curious",
-    rationale: "Shows genuine interest in understanding",
-    framework: "Active Listening"
-  }];
-
+  // Generate analysis using rule-based approach
+  const analysis = generateAnalysis(currentSnippet, parsedMessages, currentGoal);
+  
+  // Generate highlights
   const highlights = generateHighlights(parsedMessages, analysis);
+  const interactiveHighlights = generateInteractiveHighlights(parsedMessages, analysis);
+  
+  // Generate suggestions
+  const suggestions = generateSuggestions(currentGoal, highlights, analysis);
 
   return {
     analysis,
@@ -137,22 +61,267 @@ const analyzeConversationLocally = async (
   };
 };
 
-const generateSuggestions = (goal: string, highlights: any[], analysis: any, counts?: { turningAway: number; turningAgainst: number }) => {
+const generateAnalysis = (text: string, messages: any[], goal: string) => {
+  const textLower = text.toLowerCase();
+  
+  // Sentiment analysis using rule-based approach
+  const positiveWords = [
+    'good', 'great', 'excellent', 'amazing', 'wonderful', 'fantastic', 'love', 'like', 
+    'happy', 'pleased', 'excited', 'grateful', 'thankful', 'appreciate', 'awesome',
+    'perfect', 'brilliant', 'outstanding', 'superb', 'delighted', 'thrilled'
+  ];
+  
+  const negativeWords = [
+    'bad', 'terrible', 'awful', 'hate', 'dislike', 'angry', 'frustrated', 'disappointed', 
+    'sad', 'upset', 'annoyed', 'irritated', 'furious', 'devastated', 'horrible',
+    'disgusting', 'pathetic', 'stupid', 'ridiculous', 'worthless', 'useless'
+  ];
+  
+  const neutralWords = [
+    'okay', 'fine', 'alright', 'sure', 'maybe', 'perhaps', 'possibly', 'probably'
+  ];
+
+  let positiveCount = 0;
+  let negativeCount = 0;
+  let neutralCount = 0;
+
+  positiveWords.forEach(word => {
+    const regex = new RegExp(`\\b${word}\\b`, 'gi');
+    const matches = text.match(regex);
+    if (matches) positiveCount += matches.length;
+  });
+
+  negativeWords.forEach(word => {
+    const regex = new RegExp(`\\b${word}\\b`, 'gi');
+    const matches = text.match(regex);
+    if (matches) negativeCount += matches.length;
+  });
+
+  neutralWords.forEach(word => {
+    const regex = new RegExp(`\\b${word}\\b`, 'gi');
+    const matches = text.match(regex);
+    if (matches) neutralCount += matches.length;
+  });
+
+  // Calculate sentiment
+  let sentimentScore = 0;
+  let sentimentLabel = 'Neutral';
+
+  if (positiveCount > negativeCount + neutralCount) {
+    sentimentScore = 0.6;
+    sentimentLabel = 'Positive';
+  } else if (negativeCount > positiveCount + neutralCount) {
+    sentimentScore = -0.6;
+    sentimentLabel = 'Negative';
+  } else if (positiveCount > negativeCount) {
+    sentimentScore = 0.3;
+    sentimentLabel = 'Slightly Positive';
+  } else if (negativeCount > positiveCount) {
+    sentimentScore = -0.3;
+    sentimentLabel = 'Slightly Negative';
+  }
+
+  // Tone analysis
+  const tone = [];
+  if (positiveCount > 2) tone.push('Positive');
+  if (negativeCount > 2) tone.push('Frustrated');
+  if (text.includes('?')) tone.push('Curious');
+  if (textLower.includes('sorry') || textLower.includes('apologize')) tone.push('Apologetic');
+  if (textLower.includes('thank') || textLower.includes('appreciate')) tone.push('Grateful');
+  if (tone.length === 0) tone.push('Conversational');
+
+  // Gottman analysis
+  const gottmanAnalysis = analyzeGottmanPatterns(text, messages);
+  
+  // NVC analysis
+  const nvcAnalysis = analyzeNVCPatterns(text, messages);
+
+  // Pattern detection
+  const patterns = detectCommunicationPatterns(text, messages);
+
+  // Risk assessment
+  const risks = assessCommunicationRisks(text, messages);
+
+  return {
+    sentiment: {
+      score: sentimentScore,
+      label: sentimentLabel
+    },
+    tone,
+    frameworks: {
+      nvc: nvcAnalysis,
+      gottman: gottmanAnalysis
+    },
+    patterns,
+    risks
+  };
+};
+
+const analyzeGottmanPatterns = (text: string, messages: any[]) => {
+  const textLower = text.toLowerCase();
+  
+  // Count bids for connection (questions, sharing, invitations)
+  let bids = 0;
+  if (text.includes('?')) bids += (text.match(/\?/g) || []).length;
+  if (textLower.includes('want to') || textLower.includes('let\'s')) bids++;
+  if (textLower.includes('how are') || textLower.includes('how was')) bids++;
+
+  // Count responses
+  let turning_toward = 0;
+  let turning_away = 0;
+  let turning_against = 0;
+
+  const positiveResponses = ['yes', 'yeah', 'sure', 'sounds good', 'i\'d love to', 'absolutely'];
+  const neutralResponses = ['ok', 'okay', 'fine', 'maybe', 'i guess'];
+  const negativeResponses = ['no', 'not now', 'busy', 'can\'t', 'don\'t want'];
+
+  positiveResponses.forEach(response => {
+    if (textLower.includes(response)) turning_toward++;
+  });
+
+  neutralResponses.forEach(response => {
+    if (textLower.includes(response)) turning_away++;
+  });
+
+  negativeResponses.forEach(response => {
+    if (textLower.includes(response)) turning_against++;
+  });
+
+  // Four Horsemen detection
+  let criticism = 0;
+  let defensiveness = 0;
+  let stonewalling = 0;
+  let repair_attempts = 0;
+
+  // Criticism patterns
+  if (textLower.includes('you always') || textLower.includes('you never')) criticism++;
+  if (textLower.includes('you should') || textLower.includes('why don\'t you')) criticism++;
+
+  // Defensiveness patterns
+  if (textLower.includes('but ') || textLower.includes('however')) defensiveness++;
+  if (textLower.includes('that\'s not true') || textLower.includes('i never said')) defensiveness++;
+
+  // Stonewalling patterns
+  if (textLower.includes('whatever') || textLower.includes('fine')) {
+    // Only count as stonewalling if it's a standalone response
+    const words = text.trim().split(/\s+/);
+    if (words.length <= 3) stonewalling++;
+  }
+
+  // Repair attempts
+  if (textLower.includes('sorry') || textLower.includes('apologize')) repair_attempts++;
+  if (textLower.includes('let me try again') || textLower.includes('can we start over')) repair_attempts++;
+
+  return {
+    bids,
+    turning_toward,
+    turning_away,
+    turning_against,
+    criticism,
+    defensiveness,
+    stonewalling,
+    repair_attempts
+  };
+};
+
+const analyzeNVCPatterns = (text: string, messages: any[]) => {
+  const textLower = text.toLowerCase();
+  
+  // Observation
+  let observation = 'Conversation analyzed for communication patterns';
+  if (messages.length > 0) {
+    observation = `${messages.length} messages exchanged between participants`;
+  }
+
+  // Feeling
+  let feeling = 'Mixed emotional tone detected';
+  const feelingWords = ['feel', 'feeling', 'felt', 'happy', 'sad', 'frustrated', 'excited', 'worried', 'angry'];
+  const detectedFeelings = feelingWords.filter(word => textLower.includes(word));
+  if (detectedFeelings.length > 0) {
+    feeling = `Emotional expressions detected: ${detectedFeelings.join(', ')}`;
+  }
+
+  // Need
+  let need = 'Connection and understanding between participants';
+  if (textLower.includes('need') || textLower.includes('want')) {
+    need = 'Specific needs and wants expressed in conversation';
+  }
+
+  // Request
+  let request = 'Continue practicing mindful communication';
+  if (text.includes('?')) {
+    request = 'Questions asked - seeking information or connection';
+  }
+
+  return {
+    observation,
+    feeling,
+    need,
+    request
+  };
+};
+
+const detectCommunicationPatterns = (text: string, messages: any[]) => {
+  const patterns = [];
+  const textLower = text.toLowerCase();
+
+  if (text.includes('?')) {
+    patterns.push('Asking questions - shows curiosity and engagement');
+  }
+
+  if (textLower.includes('thank') || textLower.includes('appreciate')) {
+    patterns.push('Expressing gratitude - builds positive connection');
+  }
+
+  if (textLower.includes('sorry') || textLower.includes('apologize')) {
+    patterns.push('Taking responsibility - shows accountability');
+  }
+
+  if (textLower.includes('feel') || textLower.includes('feeling')) {
+    patterns.push('Sharing emotions - creates vulnerability and connection');
+  }
+
+  if (textLower.includes('i understand') || textLower.includes('i can see')) {
+    patterns.push('Showing validation - demonstrates empathy and understanding');
+  }
+
+  if (textLower.includes('let\'s') || textLower.includes('we could')) {
+    patterns.push('Collaborative language - building partnership');
+  }
+
+  return patterns;
+};
+
+const assessCommunicationRisks = (text: string, messages: any[]) => {
+  const risks = [];
+  const textLower = text.toLowerCase();
+
+  if (textLower.includes('always') || textLower.includes('never')) {
+    risks.push('Absolute language detected - try using "sometimes" or "often" instead');
+  }
+
+  if (textLower.includes('but ') || textLower.includes('however')) {
+    risks.push('Defensive language patterns - consider using "and" instead of "but"');
+  }
+
+  if (textLower.includes('you should') || textLower.includes('you need to')) {
+    risks.push('Directive language - try "I would appreciate" or "It would help if"');
+  }
+
+  const negativeWords = ['hate', 'stupid', 'ridiculous', 'pathetic'];
+  if (negativeWords.some(word => textLower.includes(word))) {
+    risks.push('Strong negative language - consider softer alternatives');
+  }
+
+  return risks;
+};
+
+const generateSuggestions = (goal: string, highlights: any[], analysis: any) => {
   const suggestions = [];
   let suggestionId = 1;
   
-  // Safely initialize all count variables with default values
-  const turningAwayCount = counts?.turningAway ?? analysis?.frameworks?.gottman?.turning_away ?? 0;
-  const turningAgainstCount = counts?.turningAgainst ?? analysis?.frameworks?.gottman?.turning_against ?? 0;
-  const turningTowardCount = analysis?.frameworks?.gottman?.turning_toward ?? 0;
-  const criticismCount = analysis?.frameworks?.gottman?.criticism ?? 0;
-  const defensivenessCount = analysis?.frameworks?.gottman?.defensiveness ?? 0;
-  const stonewallingCount = analysis?.frameworks?.gottman?.stonewalling ?? 0;
-  const repairAttemptsCount = analysis?.frameworks?.gottman?.repair_attempts ?? 0;
-  const bidsCount = analysis?.frameworks?.gottman?.bids ?? 0;
-  
   // Goal-based suggestions
-  const goalSuggestions = {
+  const goalSuggestions: { [key: string]: any[] } = {
     'reconnect': [
       {
         text: "I've been thinking about you and wanted to check in. How have you been feeling lately?",
@@ -232,22 +401,8 @@ const generateSuggestions = (goal: string, highlights: any[], analysis: any, cou
     });
   }
   
-  // Add suggestions based on detected patterns
-  const concernHighlights = highlights.filter(h => h.type === 'concern');
-  const bidHighlights = highlights.filter(h => h.type === 'bid');
-  
-  if (concernHighlights.some(h => h.category === 'Defensive Language')) {
-    suggestions.push({
-      id: suggestionId++,
-      text: "I understand your perspective, and here's how I see it...",
-      style: 'collaborative',
-      rationale: 'Replaces "but" with "and" to sound less dismissive',
-      framework: 'Communication Skills'
-    });
-  }
-  
-  // Add suggestions based on Four Horsemen detection
-  if (criticismCount > 0) {
+  // Add suggestions based on analysis
+  if (analysis.frameworks.gottman.criticism > 0) {
     suggestions.push({
       id: suggestionId++,
       text: "I feel [emotion] when [specific behavior happens]. I need [specific need].",
@@ -257,7 +412,7 @@ const generateSuggestions = (goal: string, highlights: any[], analysis: any, cou
     });
   }
   
-  if (defensivenessCount > 0) {
+  if (analysis.frameworks.gottman.defensiveness > 0) {
     suggestions.push({
       id: suggestionId++,
       text: "You're right that I contributed to this. Let me take responsibility for my part.",
@@ -267,53 +422,13 @@ const generateSuggestions = (goal: string, highlights: any[], analysis: any, cou
     });
   }
   
-  if (stonewallingCount > 0) {
-    suggestions.push({
-      id: suggestionId++,
-      text: "I'm feeling overwhelmed and need a 20-minute break to collect my thoughts. Then I'd like to continue this conversation.",
-      style: 'self-aware',
-      rationale: 'Communicates need for space while committing to return to the conversation',
-      framework: 'Gottman Method - Preventing Stonewalling'
-    });
-  }
-  
-  if (repairAttemptsCount === 0 && (turningAwayCount > 0 || turningAgainstCount > 0)) {
-    suggestions.push({
-      id: suggestionId++,
-      text: "I can see this conversation isn't going well. Can we pause and try a different approach?",
-      style: 'repair',
-      rationale: 'Initiates repair when conversation is going off track',
-      framework: 'Gottman Method - Repair Attempts'
-    });
-  }
-  
-  if (bidHighlights.length > 0 && turningTowardCount === 0) {
+  if (analysis.frameworks.gottman.bids > 0 && analysis.frameworks.gottman.turning_toward === 0) {
     suggestions.push({
       id: suggestionId++,
       text: "That sounds really interesting! Tell me more about that.",
       style: 'engaged',
       rationale: 'Shows enthusiasm for their bids for connection',
       framework: 'Gottman Method'
-    });
-  }
-  
-  if (repairAttemptsCount === 0 && (turningAwayCount > 0 || turningAgainstCount > 0)) {
-    suggestions.push({
-      id: suggestionId++,
-      text: "I can see this conversation isn't going well. Can we pause and try a different approach?",
-      style: 'repair',
-      rationale: 'Initiates repair when conversation is going off track',
-      framework: 'Gottman Method - Repair Attempts'
-    });
-  }
-  
-  if (turningAwayCount > turningTowardCount) {
-    suggestions.push({
-      id: suggestionId++,
-      text: "I want to give this the attention it deserves. Can you help me understand why this matters to you?",
-      style: 'attentive',
-      rationale: 'Shows you want to engage more fully with their concerns',
-      framework: 'Active Listening'
     });
   }
 
