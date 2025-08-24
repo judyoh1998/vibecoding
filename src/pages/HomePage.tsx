@@ -96,7 +96,7 @@ const HomePage = () => {
   const selectedGoal = goals.find(g => g.id === goal);
 
   return (
-    <div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -174,196 +174,132 @@ const HomePage = () => {
 
       <main className="pt-16">
         <div className="min-h-screen pt-8 pb-16 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto">
-          {/* AI Coach Badge */}
-          <div className="text-center mb-6">
-            <div className="inline-flex items-center space-x-2 bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-medium mb-6">
-              <Sparkles className="w-4 h-4" />
-              <span>AI-Powered Communication Coach</span>
-            </div>
-          </div>
-
-          {/* Welcome Section */}
-          <div className="text-center mb-12">
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 leading-tight">
-              Transform Your<span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"> Conversations</span>
-            </h1>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
-              Get personalized coaching on your real conversations using proven frameworks like Nonviolent Communication and Gottman principles.
-            </p>
-          </div>
-
-          {/* Main Form */}
-          <div className="bg-white rounded-2xl shadow-xl p-8 mb-12 border border-gray-100">
-            {/* Quick Start Header */}
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-2xl font-bold text-gray-900">Quick Start</h2>
-              <div className="flex items-center space-x-2 text-green-600">
-                <Shield className="w-5 h-5" />
-                <span className="text-sm font-medium">End-to-end encrypted</span>
+          <div className="max-w-4xl mx-auto">
+            {/* AI Coach Badge */}
+            <div className="text-center mb-12">
+              <div className="inline-flex items-center space-x-2 bg-blue-100 text-blue-800 px-4 py-2 rounded-full text-sm font-medium mb-6">
+                <Sparkles className="w-4 h-4" />
+                <span>AI-Powered Communication Coach</span>
               </div>
+
+              {/* Welcome Section */}
+              <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 leading-tight">
+                Transform Your<span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"> Conversations</span>
+              </h1>
+              <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
+                Get personalized coaching on your real conversations using proven frameworks like Nonviolent Communication and Gottman principles.
+              </p>
             </div>
 
-            {/* Steps */}
-            <div className="flex items-center justify-center mb-8">
-              <div className="flex items-center space-x-4">
-                <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium bg-blue-600 text-white">
-                  1
-                </div>
-                <div className="w-12 h-0.5 bg-gray-200"></div>
-                <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium bg-gray-200 text-gray-500">
-                  2
-                </div>
-                <div className="w-12 h-0.5 bg-gray-200"></div>
-                <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium bg-gray-200 text-gray-500">
-                  3
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Share Your Conversation
-                </h3>
+            {/* Main Form */}
+            <div className="bg-white rounded-2xl shadow-xl p-8 mb-12 border border-gray-100">
+              {/* Quick Start Header */}
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-2xl font-bold text-gray-900">Quick Start</h2>
                 <div className="flex items-center space-x-2 text-green-600">
-                  <Shield className="w-4 h-4" />
-                  <span className="text-sm font-medium">Private & Secure</span>
+                  <Shield className="w-5 h-5" />
+                  <span className="text-sm font-medium">End-to-end encrypted</span>
                 </div>
               </div>
-              <div className="relative">
-                <textarea
-                  placeholder="Paste your conversation snippet here... (texts, DMs, emails)"
-                  value={snippet}
-                  onChange={(e) => setSnippet(e.target.value)}
-                  className="w-full h-48 p-4 border border-gray-200 rounded-xl resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                />
-                <div className="absolute top-4 right-4">
-                  <MessageSquare className="w-5 h-5 text-gray-400" />
+
+              {/* Steps */}
+              <div className="flex items-center justify-center mb-8">
+                <div className="flex items-center space-x-4">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium bg-blue-600 text-white">
+                    1
+                  </div>
+                  <div className="w-12 h-0.5 bg-gray-200"></div>
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium bg-gray-200 text-gray-500">
+                    2
+                  </div>
+                  <div className="w-12 h-0.5 bg-gray-200"></div>
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium bg-gray-200 text-gray-500">
+                    3
+                  </div>
                 </div>
               </div>
-              <div className="bg-gray-50 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm font-medium text-gray-700">Privacy Options</span>
-                  <button className="flex items-center space-x-1 text-sm text-blue-600 hover:text-blue-700">
-                    <Eye className="w-4 h-4" />
-                    <span>Show Redacted</span>
+
+              <div className="space-y-6">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    Share Your Conversation
+                  </h3>
+                  <div className="flex items-center space-x-2 text-green-600">
+                    <Shield className="w-4 h-4" />
+                    <span className="text-sm font-medium">Private & Secure</span>
+                  </div>
+                </div>
+                <div className="relative">
+                  <textarea
+                    placeholder="Paste your conversation snippet here... (texts, DMs, emails)"
+                    value={snippet}
+                    onChange={(e) => setSnippet(e.target.value)}
+                    className="w-full h-48 p-4 border border-gray-200 rounded-xl resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  />
+                  <div className="absolute top-4 right-4">
+                    <MessageSquare className="w-5 h-5 text-gray-400" />
+                  </div>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm font-medium text-gray-700">Privacy Options</span>
+                    <button className="flex items-center space-x-1 text-sm text-blue-600 hover:text-blue-700">
+                      <Eye className="w-4 h-4" />
+                      <span>Show Redacted</span>
+                    </button>
+                  </div>
+                  <button className="w-full bg-blue-50 hover:bg-blue-100 text-blue-700 py-2 px-4 rounded-lg text-sm font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                    Auto-redact sensitive information
                   </button>
+                  <p className="text-xs text-gray-500 mt-2">
+                    We'll automatically detect and redact emails, phone numbers, addresses, and other sensitive data. Normal conversation text won't be affected.
+                  </p>
                 </div>
-                <button className="w-full bg-blue-50 hover:bg-blue-100 text-blue-700 py-2 px-4 rounded-lg text-sm font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
-                  Auto-redact sensitive information
+                <button
+                  onClick={handleAnalyze}
+                  disabled={!snippet.trim()}
+                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 px-6 rounded-xl font-semibold hover:shadow-lg transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                >
+                  Preview & Continue
                 </button>
-                <p className="text-xs text-gray-500 mt-2">
-                  We'll automatically detect and redact emails, phone numbers, addresses, and other sensitive data. Normal conversation text won't be affected.
+              </div>
+            </div>
+
+            {/* Feature Cards */}
+            <div className="grid md:grid-cols-3 gap-8">
+              <div className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105">
+                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+                  <MessageSquare className="w-6 h-6 text-blue-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Smart Analysis</h3>
+                <p className="text-gray-600">
+                  Analyze tone, sentiment, and communication patterns using proven frameworks like NVC and Gottman principles.
                 </p>
-              </div>
-              <button
-                onClick={handleAnalyze}
-                disabled={!snippet.trim()}
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 px-6 rounded-xl font-semibold hover:shadow-lg transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-              >
-                Preview & Continue
-              </button>
-            </div>
-          </div>
-
-          {/* Feature Cards */}
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
-                <MessageSquare className="w-6 h-6 text-blue-600" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Smart Analysis</h3>
-              <p className="text-gray-600">
-                Analyze tone, sentiment, and communication patterns using proven frameworks like NVC and Gottman principles.
-              </p>
-            </div>
-            
-            <div className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105">
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
-                <Target className="w-6 h-6 text-green-600" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Conflict Resolution</h3>
-              <p className="text-gray-600">
-                Get step-by-step de-escalation guidance and repair scripts for difficult conversations.
-              </p>
-            </div>
-            
-            <div className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105">
-              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
-                <Heart className="w-6 h-6 text-purple-600" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Relationship Growth</h3>
-              <p className="text-gray-600">
-                Track your communication progress and build positive habits with friendship vitamins.
-              </p>
-            </div>
-          </div>
-        </div>
-        </div>
-      </main>
-    </div>
-  );
-};
-
-export default HomePage;
-
-                  <Eye className="w-4 h-4" />
-                  <span>Show Redacted</span>
-                </button>
               </div>
               
-              <div className="text-center mb-4">
-                <p className="text-blue-600 font-medium mb-2">Auto-redact sensitive information</p>
-                <p className="text-gray-600 text-sm">
-                  We'll automatically detect and redact emails, phone numbers, addresses, and other sensitive data. Normal conversation text won't be affected.
+              <div className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105">
+                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
+                  <Target className="w-6 h-6 text-green-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Conflict Resolution</h3>
+                <p className="text-gray-600">
+                  Get step-by-step de-escalation guidance and repair scripts for difficult conversations.
+                </p>
+              </div>
+              
+              <div className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105">
+                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
+                  <Heart className="w-6 h-6 text-purple-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Relationship Growth</h3>
+                <p className="text-gray-600">
+                  Track your communication progress and build positive habits with friendship vitamins.
                 </p>
               </div>
             </div>
-
-            <button
-              onClick={handleAnalyze}
-              disabled={!snippet.trim()}
-              className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-4 px-6 rounded-xl font-semibold hover:from-blue-600 hover:to-purple-700 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl"
-            >
-              <span>Preview & Continue</span>
-            </button>
-          </div>
-
-          {/* Feature Cards */}
-          <div className="grid md:grid-cols-3 gap-6 mt-8">
-            <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-200">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
-                <MessageSquare className="w-6 h-6 text-blue-600" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Smart Analysis</h3>
-              <p className="text-gray-600 text-sm">
-                Analyze tone, sentiment, and communication patterns using proven frameworks like NVC and Gottman principles.
-              </p>
-            </div>
-            
-            <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-200">
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
-                <Target className="w-6 h-6 text-green-600" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Conflict Resolution</h3>
-              <p className="text-gray-600 text-sm">
-                Get step-by-step de-escalation guidance and repair scripts for difficult conversations.
-              </p>
-            </div>
-            
-            <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-200">
-              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
-                <Heart className="w-6 h-6 text-purple-600" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Relationship Growth</h3>
-              <p className="text-gray-600 text-sm">
-                Track your communication progress and build positive habits with friendship vitamins.
-              </p>
-            </div>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 };

@@ -80,7 +80,7 @@ const AnalysisPage = () => {
   }
 
   return (
-    <div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -89,6 +89,13 @@ const AnalysisPage = () => {
             <a className="flex items-center space-x-2" href="/" data-discover="true">
               <div className="relative w-8 h-8">
                 <svg viewBox="0 0 32 32" className="w-8 h-8">
+                  <path d="M6 8c0-2.2 1.8-4 4-4h8c2.2 0 4 1.8 4 4v6c0 2.2-1.8 4-4 4h-2l-3 3-3-3h-2c-2.2 0-4-1.8-4-4V8z" fill="#3B82F6" opacity="0.7"></path>
+                  <path d="M10 12c0-2.2 1.8-4 4-4h8c2.2 0 4 1.8 4 4v6c0 2.2-1.8 4-4 4h-2l-3 3-3-3h-2c-2.2 0-4-1.8-4-4v-6z" fill="#8B5CF6"></path>
+                  <circle cx="16" cy="15" r="1.5" fill="white" opacity="0.9"></circle>
+                  <circle cx="20" cy="15" r="1.5" fill="white" opacity="0.9"></circle>
+                  <circle cx="12" cy="11" r="1.5" fill="white" opacity="0.6"></circle>
+                  <path d="M18 10.5c0-1.1.9-2 2-2s2 .9 2 2c0 .6-.3 1.1-.7 1.4L20 13.2l-1.3-1.3c-.4-.3-.7-.8-.7-1.4z" fill="#EF4444" opacity="0.8"></path>
+                </svg>
                   <path d="M6 8c0-2.2 1.8-4 4-4h8c2.2 0 4 1.8 4 4v6c0 2.2-1.8 4-4 4h-2l-3 3-3-3h-2c-2.2 0-4-1.8-4-4V8z" fill="#3B82F6" opacity="0.7"></path>
                   <path d="M10 12c0-2.2 1.8-4 4-4h8c2.2 0 4 1.8 4 4v6c0 2.2-1.8 4-4 4h-2l-3 3-3-3h-2c-2.2 0-4-1.8-4-4v-6z" fill="#8B5CF6"></path>
                   <circle cx="16" cy="15" r="1.5" fill="white" opacity="0.9"></circle>
@@ -153,10 +160,35 @@ const AnalysisPage = () => {
               </a>
             </nav>
           </div>
+          <div className="md:hidden flex justify-center pb-3">
+            <nav className="flex items-center space-x-1 bg-white rounded-full p-1 shadow-sm">
+              <a className="flex flex-col items-center px-3 py-2 rounded-full transition-all duration-200 bg-blue-100 text-blue-700" href="/" data-discover="true">
+                <Heart className="w-4 h-4" />
+                <span className="text-xs font-medium mt-1">Coach</span>
+              </a>
+              <a className="flex flex-col items-center px-3 py-2 rounded-full transition-all duration-200 text-gray-600 hover:text-blue-600" href="/analysis" data-discover="true">
+                <MessageSquare className="w-4 h-4" />
+                <span className="text-xs font-medium mt-1">Analysis</span>
+              </a>
+              <a className="flex flex-col items-center px-3 py-2 rounded-full transition-all duration-200 text-gray-600 hover:text-blue-600" href="/conflict" data-discover="true">
+                <AlertTriangle className="w-4 h-4" />
+                <span className="text-xs font-medium mt-1">Conflict</span>
+              </a>
+              <a className="flex flex-col items-center px-3 py-2 rounded-full transition-all duration-200 text-gray-600 hover:text-blue-600" href="/progress" data-discover="true">
+                <TrendingUp className="w-4 h-4" />
+                <span className="text-xs font-medium mt-1">Progress</span>
+              </a>
+              <a className="flex flex-col items-center px-3 py-2 rounded-full transition-all duration-200 text-gray-600 hover:text-blue-600" href="/profile" data-discover="true">
+                <User className="w-4 h-4" />
+                <span className="text-xs font-medium mt-1">Profile</span>
+              </a>
+            </nav>
+          </div>
         </div>
       </header>
 
       <main className="pt-16">
+        <div className="pt-8 pb-16 px-4 sm:px-6 lg:px-8">
         <div className="pt-8 pb-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
@@ -400,6 +432,7 @@ const AnalysisPage = () => {
           )}
         </div>
       </div>
+      </main>
       </main>
     </div>
   );
