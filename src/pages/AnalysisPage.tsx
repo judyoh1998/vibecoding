@@ -102,26 +102,26 @@ const AnalysisPage = () => {
 
             {/* Navigation */}
             <nav className="hidden md:flex items-center space-x-8">
-              <a className="flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 bg-blue-100 text-blue-700" href="/" data-discover="true">
+              <Link className="flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 text-gray-600 hover:text-blue-600 hover:bg-blue-50" to="/">
                 <Heart className="w-4 h-4" />
                 <span className="text-sm font-medium">Coach</span>
-              </a>
-              <a className="flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 text-gray-600 hover:text-blue-600 hover:bg-blue-50" href="/analysis" data-discover="true">
+              </Link>
+              <Link className="flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 bg-blue-100 text-blue-700" to="/analysis">
                 <MessageSquare className="w-4 h-4" />
                 <span className="text-sm font-medium">Analysis</span>
-              </a>
-              <a className="flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 text-gray-600 hover:text-blue-600 hover:bg-blue-50" href="/conflict" data-discover="true">
+              </Link>
+              <Link className="flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 text-gray-600 hover:text-blue-600 hover:bg-blue-50" to="/conflict">
                 <AlertTriangle className="w-4 h-4" />
                 <span className="text-sm font-medium">Conflict</span>
-              </a>
-              <a className="flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 text-gray-600 hover:text-blue-600 hover:bg-blue-50" href="/progress" data-discover="true">
+              </Link>
+              <Link className="flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 text-gray-600 hover:text-blue-600 hover:bg-blue-50" to="/progress">
                 <TrendingUp className="w-4 h-4" />
                 <span className="text-sm font-medium">Progress</span>
-              </a>
-              <a className="flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 text-gray-600 hover:text-blue-600 hover:bg-blue-50" href="/profile" data-discover="true">
+              </Link>
+              <Link className="flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200 text-gray-600 hover:text-blue-600 hover:bg-blue-50" to="/profile">
                 <User className="w-4 h-4" />
                 <span className="text-sm font-medium">Profile</span>
-              </a>
+              </Link>
             </nav>
 
             <div className="flex items-center space-x-2">
@@ -131,26 +131,26 @@ const AnalysisPage = () => {
           </div>
           <div className="md:hidden flex justify-center pb-3">
             <nav className="flex items-center space-x-1 bg-white rounded-full p-1 shadow-sm">
-              <a className="flex flex-col items-center px-3 py-2 rounded-full transition-all duration-200 bg-blue-100 text-blue-700" href="/" data-discover="true">
+              <Link className="flex flex-col items-center px-3 py-2 rounded-full transition-all duration-200 text-gray-600 hover:text-blue-600" to="/">
                 <Heart className="w-4 h-4" />
                 <span className="text-xs font-medium mt-1">Coach</span>
-              </a>
-              <a className="flex flex-col items-center px-3 py-2 rounded-full transition-all duration-200 text-gray-600 hover:text-blue-600" href="/analysis" data-discover="true">
+              </Link>
+              <Link className="flex flex-col items-center px-3 py-2 rounded-full transition-all duration-200 bg-blue-100 text-blue-700" to="/analysis">
                 <MessageSquare className="w-4 h-4" />
                 <span className="text-xs font-medium mt-1">Analysis</span>
-              </a>
-              <a className="flex flex-col items-center px-3 py-2 rounded-full transition-all duration-200 text-gray-600 hover:text-blue-600" href="/conflict" data-discover="true">
+              </Link>
+              <Link className="flex flex-col items-center px-3 py-2 rounded-full transition-all duration-200 text-gray-600 hover:text-blue-600" to="/conflict">
                 <AlertTriangle className="w-4 h-4" />
                 <span className="text-xs font-medium mt-1">Conflict</span>
-              </a>
-              <a className="flex flex-col items-center px-3 py-2 rounded-full transition-all duration-200 text-gray-600 hover:text-blue-600" href="/progress" data-discover="true">
+              </Link>
+              <Link className="flex flex-col items-center px-3 py-2 rounded-full transition-all duration-200 text-gray-600 hover:text-blue-600" to="/progress">
                 <TrendingUp className="w-4 h-4" />
                 <span className="text-xs font-medium mt-1">Progress</span>
-              </a>
-              <a className="flex flex-col items-center px-3 py-2 rounded-full transition-all duration-200 text-gray-600 hover:text-blue-600" href="/profile" data-discover="true">
+              </Link>
+              <Link className="flex flex-col items-center px-3 py-2 rounded-full transition-all duration-200 text-gray-600 hover:text-blue-600" to="/profile">
                 <User className="w-4 h-4" />
                 <span className="text-xs font-medium mt-1">Profile</span>
-              </a>
+              </Link>
             </nav>
           </div>
         </div>
