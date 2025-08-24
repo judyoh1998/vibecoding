@@ -49,7 +49,7 @@ const ConversationHighlights = ({ highlights, originalMessages }: ConversationHi
           <h3 className="text-lg font-semibold text-gray-900">Key Moments</h3>
         </div>
         <div className="text-center py-4 text-gray-500">
-          <p className="text-sm">No key moments detected in this conversation.</p>
+          <p className="text-sm">Check the interactive conversation above for detailed highlights and insights.</p>
         </div>
       </div>
     );

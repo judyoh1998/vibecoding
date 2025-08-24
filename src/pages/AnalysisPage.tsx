@@ -2,10 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Copy, ThumbsUp, ThumbsDown, Lightbulb, Heart, MessageSquare, Target, TrendingUp, Brain, AlertCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useStore } from '../store/useStore';
-import AnalysisResults from '../components/AnalysisResults';
 import InteractiveConversation from '../components/InteractiveConversation';
 import ConversationHighlights from '../components/ConversationHighlights';
-import toast from 'react-hot-toast';
+import toast, { Toaster } from 'react-hot-toast';
 import { analyzeConversation } from '../utils/analysisUtils';
 
 const AnalysisPage = () => {
@@ -248,6 +247,7 @@ const AnalysisPage = () => {
           )
         )}
       </div>
+      <Toaster position="top-right" />
     </div>
   );
 };
