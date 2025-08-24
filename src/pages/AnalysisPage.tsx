@@ -426,7 +426,6 @@ const AnalysisPage = () => {
         </div>
       </div>
       </main>
-      </main>
     </div>
   );
 };
