@@ -96,17 +96,18 @@ const HomePage = () => {
   const selectedGoal = goals.find(g => g.id === goal);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 pt-8 pb-16 px-4 sm:px-6 lg:px-8">
+    <div className="pt-8 pb-16 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
-        {/* Header */}
+        {/* Welcome Section */}
         <div className="text-center mb-12">
-          <div className="flex items-center justify-center space-x-3 mb-4">
-            <Heart className="w-8 h-8 text-blue-600" />
-            <h1 className="text-4xl font-bold text-gray-900">BetterFriend</h1>
-          </div>
-          <p className="text-xl text-blue-700 mb-2 font-medium">Your AI Communication Coach</p>
-          <p className="text-blue-600">
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            Improve Your Communication
+          </h2>
+          <p className="text-xl text-blue-700 mb-2 font-medium">
             Get personalized suggestions based on proven relationship science frameworks
+          </p>
+          <p className="text-blue-600">
+            Analyze conversations using Gottman Method and Nonviolent Communication principles
           </p>
         </div>
 

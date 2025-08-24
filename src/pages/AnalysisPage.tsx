@@ -80,14 +80,14 @@ const AnalysisPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 pt-8 pb-16 px-4 sm:px-6 lg:px-8">
+    <div className="pt-8 pb-16 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-4">
             <Link
               to="/"
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2 hover:bg-white/50 rounded-lg transition-colors backdrop-blur-sm"
             >
               <ArrowLeft className="w-5 h-5 text-gray-600" />
             </Link>
