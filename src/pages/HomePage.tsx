@@ -11,6 +11,8 @@ const HomePage = () => {
   const [goal, setGoal] = useState('general');
   const [isRedacted, setIsRedacted] = useState(false);
   const [originalSnippet, setOriginalSnippet] = useState('');
+  const [showPreview, setShowPreview] = useState(false);
+  const [parsedMessages, setParsedMessages] = useState([]);
 
   const goals = [
     { id: 'reconnect', label: 'Reconnect', icon: Heart, description: 'Rebuild connection and intimacy' },
@@ -82,18 +84,171 @@ const HomePage = () => {
     toast.success(`Names redacted for privacy`);
   };
 
-  const handleAnalyze = () => {
+  const handlePreview = () => {
     if (!snippet.trim()) {
       toast.error('Please enter a conversation snippet');
       return;
     }
 
+    // Parse the conversation to show preview
+    const lines = snippet.trim().split('\n');
+    const messages = [];
+    let messageId = 0;
+    
+    for (const line of lines) {
+      const trimmedLine = line.trim();
+      if (!trimmedLine) continue;
+      
+      // Try to detect speaker patterns (Speaker: message)
+      const colonMatch = trimmedLine.match(/^([^:]+):\s*(.+)$/);
+      if (colonMatch) {
+        const speaker = colonMatch[1].trim();
+        const messageText = colonMatch[2].trim();
+        
+        messages.push({
+          id: `msg-${messageId}`,
+          speaker,
+          text: messageText,
+          isUser: speaker.toLowerCase() === 'me' || speaker.toLowerCase() === 'i'
+        });
+        messageId++;
+      } else {
+        // If no speaker pattern, treat as continuation or unknown speaker
+        messages.push({
+          id: `msg-${messageId}`,
+          speaker: 'Unknown',
+          text: trimmedLine,
+          isUser: false
+        });
+        messageId++;
+      }
+    }
+    
+    setParsedMessages(messages);
+    setShowPreview(true);
+  };
+
+  const handleAnalyze = () => {
     setCurrentSnippet(snippet);
     setCurrentGoal(goal);
     navigate('/analysis');
   };
 
+  const handleBackToEdit = () => {
+    setShowPreview(false);
+  };
+
   const selectedGoal = goals.find(g => g.id === goal);
+
+  if (showPreview) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+        {/* Header */}
+        <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-b border-gray-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-16">
+              {/* Logo and Brand */}
+              <a className="flex items-center space-x-2" href="/" data-discover="true">
+                <div className="relative w-8 h-8">
+                  <svg viewBox="0 0 32 32" className="w-8 h-8">
+                    <path d="M6 8c0-2.2 1.8-4 4-4h8c2.2 0 4 1.8 4 4v6c0 2.2-1.8 4-4 4h-2l-3 3-3-3h-2c-2.2 0-4-1.8-4-4V8z" fill="#3B82F6" opacity="0.7"></path>
+                    <path d="M10 12c0-2.2 1.8-4 4-4h8c2.2 0 4 1.8 4 4v6c0 2.2-1.8 4-4 4h-2l-3 3-3-3h-2c-2.2 0-4-1.8-4-4v-6z" fill="#8B5CF6"></path>
+                    <circle cx="16" cy="15" r="1.5" fill="white" opacity="0.9"></circle>
+                    <circle cx="20" cy="15" r="1.5" fill="white" opacity="0.9"></circle>
+                    <circle cx="12" cy="11" r="1.5" fill="white" opacity="0.6"></circle>
+                    <path d="M18 10.5c0-1.1.9-2 2-2s2 .9 2 2c0 .6-.3 1.1-.7 1.4L20 13.2l-1.3-1.3c-.4-.3-.7-.8-.7-1.4z" fill="#EF4444" opacity="0.8"></path>
+                  </svg>
+                </div>
+                <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">BetterFriend</span>
+              </a>
+
+              <div className="flex items-center space-x-2">
+                <Shield className="w-5 h-5 text-green-600" />
+                <span className="text-xs text-gray-500 font-medium">Privacy Protected</span>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <main className="pt-16">
+          <div className="min-h-screen pt-8 pb-16 px-4 sm:px-6 lg:px-8">
+            <div className="max-w-4xl mx-auto">
+              {/* Preview Header */}
+              <div className="text-center mb-8">
+                <h1 className="text-3xl font-bold text-gray-900 mb-4">
+                  Conversation Preview
+                </h1>
+                <p className="text-lg text-gray-600">
+                  Review your conversation before analysis
+                </p>
+              </div>
+
+              {/* Goal Display */}
+              <div className="bg-blue-50 rounded-xl p-4 mb-6 border border-blue-200">
+                <div className="flex items-center space-x-2">
+                  {selectedGoal && <selectedGoal.icon className="w-5 h-5 text-blue-600" />}
+                  <span className="font-medium text-blue-900">Goal: {selectedGoal?.label}</span>
+                  <span className="text-blue-700">- {selectedGoal?.description}</span>
+                </div>
+              </div>
+
+              {/* Parsed Conversation Preview */}
+              <div className="bg-white rounded-2xl shadow-xl p-6 mb-8 border border-gray-100">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Parsed Conversation</h3>
+                
+                {parsedMessages.length > 0 ? (
+                  <div className="space-y-3 max-h-96 overflow-y-auto">
+                    {parsedMessages.map((message) => (
+                      <div key={message.id} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+                        <div className={`px-3 py-1 rounded-full text-xs font-medium ${
+                          message.speaker === 'Unknown' 
+                            ? 'bg-gray-100 text-gray-600'
+                            : message.isUser 
+                              ? 'bg-blue-100 text-blue-800' 
+                              : 'bg-green-100 text-green-800'
+                        }`}>
+                          {message.speaker}
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm text-gray-900">{message.text}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <MessageSquare className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                    <p>No conversation detected. Try using this format:</p>
+                    <div className="mt-3 p-3 bg-gray-50 rounded-lg text-left text-sm">
+                      <p className="font-mono">Person A: Hello, how are you?</p>
+                      <p className="font-mono">Person B: I'm doing well, thanks!</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex space-x-4">
+                <button
+                  onClick={handleBackToEdit}
+                  className="flex-1 bg-gray-100 text-gray-700 py-4 px-6 rounded-xl font-semibold hover:bg-gray-200 transition-all duration-200"
+                >
+                  ← Back to Edit
+                </button>
+                <button
+                  onClick={handleAnalyze}
+                  disabled={parsedMessages.length === 0}
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 px-6 rounded-xl font-semibold hover:shadow-lg transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                >
+                  Continue to Analysis →
+                </button>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
@@ -256,7 +411,7 @@ const HomePage = () => {
                   </p>
                 </div>
                 <button
-                  onClick={handleAnalyze}
+                  onClick={handlePreview}
                   disabled={!snippet.trim()}
                   className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 px-6 rounded-xl font-semibold hover:shadow-lg transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 >
