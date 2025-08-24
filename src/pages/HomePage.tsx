@@ -224,9 +224,9 @@ const HomePage = () => {
                   <h3 className="text-lg font-semibold text-gray-900">
                     Share Your Conversation
                   </h3>
-                  <div className="flex items-center space-x-3 text-green-600">
+                  <div className="flex items-center space-x-2 text-green-600">
                     <Shield className="w-4 h-4" />
-                    <span className="text-sm font-medium">End-to-end encrypted</span>
+                    <span className="text-sm font-medium">Private & Secure</span>
                   </div>
                 </div>
                 <div className="relative">
