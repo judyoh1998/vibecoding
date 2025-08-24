@@ -195,14 +195,14 @@ const InteractiveConversation = ({ messages, highlights, suggestions = [] }: Int
   }
 
   return (
-    <div className="bg-white rounded-xl p-6 shadow-lg relative">
+    <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-200 relative">
       <div className="flex items-center space-x-2 mb-6">
         <MessageCircle className="w-5 h-5 text-indigo-500" />
         <h3 className="text-lg font-semibold text-gray-900">Interactive Conversation Analysis</h3>
       </div>
 
       {/* Legend */}
-      <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+      <div className="mb-6 p-5 bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl border border-gray-200">
         <h4 className="text-sm font-medium text-gray-700 mb-3">Highlight Legend:</h4>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
           <div className="flex items-center space-x-2">
@@ -230,8 +230,8 @@ const InteractiveConversation = ({ messages, highlights, suggestions = [] }: Int
             <span>Concern</span>
           </div>
         </div>
-        <div className="mt-3 text-xs text-gray-600">
-          <p className="mb-2"><strong>Growth Opportunity:</strong> Positive communication patterns that strengthen relationships (like expressing gratitude, showing empathy, or making repair attempts)</p>
+        <div className="mt-4 p-3 bg-white bg-opacity-60 rounded-lg border border-blue-200">
+          <p className="text-xs text-blue-800 mb-2"><strong>💜 Growth Opportunity:</strong> Positive communication patterns that strengthen relationships (like expressing gratitude, showing empathy, or making repair attempts)</p>
           <p><strong>Tip:</strong> Hover over any highlighted text to see detailed explanations and suggestions</p>
         </div>
       </div>
@@ -239,7 +239,7 @@ const InteractiveConversation = ({ messages, highlights, suggestions = [] }: Int
       {/* Conversation Messages */}
       <div className="space-y-4 max-h-96 overflow-y-auto">
         {messages.map((message) => (
-          <div key={message.id} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+          <div key={message.id} className="flex items-start space-x-3 p-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl border border-gray-200">
             <div className={`px-3 py-1 rounded-full text-xs font-medium ${getSpeakerColor(message.speaker)}`}>
               {message.speaker}
             </div>
@@ -258,7 +258,7 @@ const InteractiveConversation = ({ messages, highlights, suggestions = [] }: Int
       {/* Tooltip */}
       {hoveredHighlightData && (
         <div
-          className="fixed z-50 bg-white border border-gray-200 rounded-lg shadow-xl p-4 max-w-sm"
+          className="fixed z-50 bg-white border-2 border-blue-200 rounded-xl shadow-2xl p-5 max-w-sm"
           style={{
             left: tooltipPosition.x - 150,
             top: tooltipPosition.y - 10,
@@ -274,7 +274,7 @@ const InteractiveConversation = ({ messages, highlights, suggestions = [] }: Int
             </span>
           </div>
           
-          <p className="text-xs text-gray-600 mb-3">
+          <p className="text-sm text-gray-700 mb-4 leading-relaxed">
             {hoveredHighlightData.explanation}
           </p>
 
@@ -283,14 +283,14 @@ const InteractiveConversation = ({ messages, highlights, suggestions = [] }: Int
               <p className="text-xs font-medium text-gray-700 mb-2">
                 {hoveredHighlightData.type === 'opportunity' || hoveredHighlightData.type === 'bid' || hoveredHighlightData.type === 'response-toward' ? 'Great job!' : 'Suggested improvement:'}
               </p>
-              <div className="bg-blue-50 rounded p-2 mb-2">
-                <p className="text-xs text-blue-800 italic">
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-3 mb-3 border border-blue-200">
+                <p className="text-sm text-blue-900 font-medium">
                   "{hoveredHighlightData.suggestion}"
                 </p>
               </div>
               <button
                 onClick={() => handleCopySuggestion(hoveredHighlightData.suggestion)}
-                className="flex items-center space-x-1 text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 transition-colors"
+                className="flex items-center space-x-2 text-sm bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-3 py-2 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-medium shadow-md hover:shadow-lg"
               >
                 <Copy className="w-3 h-3" />
                 <span>Copy</span>
