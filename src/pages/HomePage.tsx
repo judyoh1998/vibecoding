@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MessageSquare, Target, Heart, Brain, ArrowRight, Lightbulb, Eye, EyeOff, Wand2 } from 'lucide-react';
+import { MessageSquare, Target, Heart, Brain, ArrowRight, Lightbulb, Eye, EyeOff, Wand2, AlertTriangle, BarChart, User, ShieldCheck, Sparkles } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import toast from 'react-hot-toast';
 
@@ -103,54 +103,118 @@ const HomePage = () => {
           <div className="flex items-center justify-between h-16">
             {/* Logo and Brand */}
             <div className="flex items-center space-x-3">
-              <div className="relative">
-                <Heart className="w-8 h-8 text-blue-600" />
-                <div className="w-3 h-3 bg-yellow-400 rounded-full absolute -top-1 -right-1 animate-pulse"></div>
+              <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-600 rounded-lg flex items-center justify-center">
+                <MessageSquare className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
                   BetterFriend
                 </h1>
-                <p className="text-xs text-blue-600 font-medium -mt-1">AI Communication Coach</p>
               </div>
             </div>
 
             {/* Navigation */}
-            <nav className="hidden md:flex items-center space-x-6">
-              <div className="text-blue-600 text-sm">
-                Based on proven relationship science
+            <nav className="hidden md:flex items-center space-x-1">
+              <div className="flex items-center space-x-2 bg-blue-100 text-blue-700 px-3 py-2 rounded-lg">
+                <Heart className="w-4 h-4" />
+                <span className="text-sm font-medium">Coach</span>
+              </div>
+              <div className="flex items-center space-x-2 text-gray-600 hover:text-blue-700 px-3 py-2 rounded-lg hover:bg-blue-50 transition-colors">
+                <MessageSquare className="w-4 h-4" />
+                <span className="text-sm font-medium">Analysis</span>
+              </div>
+              <div className="flex items-center space-x-2 text-gray-600 hover:text-blue-700 px-3 py-2 rounded-lg hover:bg-blue-50 transition-colors">
+                <AlertTriangle className="w-4 h-4" />
+                <span className="text-sm font-medium">Conflict</span>
+              </div>
+              <div className="flex items-center space-x-2 text-gray-600 hover:text-blue-700 px-3 py-2 rounded-lg hover:bg-blue-50 transition-colors">
+                <BarChart className="w-4 h-4" />
+                <span className="text-sm font-medium">Progress</span>
+              </div>
+              <div className="flex items-center space-x-2 text-gray-600 hover:text-blue-700 px-3 py-2 rounded-lg hover:bg-blue-50 transition-colors">
+                <User className="w-4 h-4" />
+                <span className="text-sm font-medium">Profile</span>
               </div>
             </nav>
+
+            {/* Privacy Protected */}
+            <div className="flex items-center space-x-2 text-green-600">
+              <ShieldCheck className="w-4 h-4" />
+              <span className="text-sm font-medium">Privacy Protected</span>
+            </div>
           </div>
         </div>
       </header>
 
       <div className="pt-8 pb-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
+          {/* AI Coach Badge */}
+          <div className="text-center mb-6">
+            <div className="inline-flex items-center space-x-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-full">
+              <Sparkles className="w-4 h-4" />
+              <span className="text-sm font-medium">AI-Powered Communication Coach</span>
+            </div>
+          </div>
+
           {/* Welcome Section */}
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Improve Your Communication
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              Transform Your <span className="bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">Conversations</span>
             </h2>
-            <p className="text-xl text-blue-700 mb-2 font-medium">
-              Get personalized suggestions based on proven relationship science frameworks
-            </p>
-            <p className="text-blue-600">
-              Analyze conversations using Gottman Method and Nonviolent Communication principles
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Get personalized coaching on your real conversations using proven frameworks like Nonviolent Communication and Gottman principles.
             </p>
           </div>
 
           {/* Main Form */}
           <div className="bg-white rounded-2xl shadow-2xl p-8 mb-8 border border-blue-100">
+            {/* Quick Start Header */}
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-xl font-bold text-gray-900">Quick Start</h3>
+              </div>
+              <div className="flex items-center space-x-2 text-green-600">
+                <ShieldCheck className="w-4 h-4" />
+                <span className="text-sm font-medium">End-to-end encrypted</span>
+              </div>
+            </div>
+
+            {/* Steps */}
+            <div className="flex items-center justify-center space-x-8 mb-8">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                  1
+                </div>
+              </div>
+              <div className="w-12 h-px bg-gray-300"></div>
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center text-sm font-bold">
+                  2
+                </div>
+              </div>
+              <div className="w-12 h-px bg-gray-300"></div>
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center text-sm font-bold">
+                  3
+                </div>
+              </div>
+            </div>
+
             <div className="mb-8">
-              <label htmlFor="snippet" className="block text-sm font-medium text-gray-700 mb-2">
-                Share your conversation
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label htmlFor="snippet" className="block text-lg font-semibold text-gray-900">
+                  Share Your Conversation
+                </label>
+                <div className="flex items-center space-x-2 text-green-600">
+                  <ShieldCheck className="w-4 h-4" />
+                  <span className="text-sm font-medium">Private & Secure</span>
+                </div>
+              </div>
               <textarea
                 id="snippet"
                 value={snippet}
                 onChange={(e) => setSnippet(e.target.value)}
-                placeholder="Paste your conversation here... For example:&#10;&#10;Me: How was your day?&#10;Partner: Fine.&#10;Me: Just fine? Did something happen?&#10;Partner: I don't want to talk about it.&#10;&#10;💡 Tip: Use 'Speaker: message' format for best results"
+                placeholder="Paste your conversation snippet here... (texts, DMs, emails)"
                 className="w-full h-48 p-4 border-2 border-gray-200 rounded-xl focus:ring-3 focus:ring-blue-500 focus:border-blue-500 resize-none transition-all duration-200 text-gray-800 leading-relaxed"
               />
               
