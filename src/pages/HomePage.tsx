@@ -417,6 +417,58 @@ const HomePage = () => {
                 >
                   Preview & Continue
                 </button>
+
+                {/* Inline Preview Section */}
+                {showPreview && parsedMessages.length > 0 && (
+                  <div className="mt-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border-2 border-blue-200">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Conversation Preview</h3>
+                    
+                    {/* Goal Display */}
+                    <div className="bg-blue-100 rounded-lg p-3 mb-4 border border-blue-200">
+                      <div className="flex items-center space-x-2">
+                        {selectedGoal && <selectedGoal.icon className="w-4 h-4 text-blue-600" />}
+                        <span className="font-medium text-blue-900">Goal: {selectedGoal?.label}</span>
+                        <span className="text-blue-700">- {selectedGoal?.description}</span>
+                      </div>
+                    </div>
+                    
+                    {/* Parsed Messages */}
+                    <div className="space-y-2 max-h-64 overflow-y-auto mb-4">
+                      {parsedMessages.map((message) => (
+                        <div key={message.id} className="flex items-start space-x-3 p-3 bg-white rounded-lg border border-blue-200">
+                          <div className={`px-3 py-1 rounded-full text-xs font-medium ${
+                            message.speaker === 'Unknown' 
+                              ? 'bg-gray-100 text-gray-600'
+                              : message.isUser 
+                                ? 'bg-blue-100 text-blue-800' 
+                                : 'bg-green-100 text-green-800'
+                          }`}>
+                            {message.speaker}
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm text-gray-900">{message.text}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {/* Action Buttons */}
+                    <div className="flex space-x-3">
+                      <button
+                        onClick={() => setShowPreview(false)}
+                        className="flex-1 bg-gray-100 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+                      >
+                        Edit Conversation
+                      </button>
+                      <button
+                        onClick={handleAnalyze}
+                        className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 text-white py-3 px-4 rounded-lg font-medium hover:shadow-lg transition-all duration-200 transform hover:scale-105"
+                      >
+                        Continue to Analysis →
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
