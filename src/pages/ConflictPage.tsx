@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, AlertTriangle, Heart, Shield, MessageSquare, TrendingUp, User, CheckCircle, XCircle, Clock, Target, Lightbulb, Copy, RefreshCw } from 'lucide-react';
+import { ArrowLeft, AlertTriangle, Heart, Shield, MessageSquare, TrendingUp, User, CheckCircle, XCircle, Clock, Target, Lightbulb, Copy } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 

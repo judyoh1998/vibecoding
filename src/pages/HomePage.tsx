@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { MessageSquare, Target, Heart, Brain, ArrowRight, Lightbulb, Eye, EyeOff, Wand2, AlertTriangle, BarChart, User, Shield, Sparkles, TrendingUp } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { MessageSquare, Target, Heart, Brain, Lightbulb, Eye, Wand2, AlertTriangle, User, Shield, Sparkles, TrendingUp } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import toast from 'react-hot-toast';
 

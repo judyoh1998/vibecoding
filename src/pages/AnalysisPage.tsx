@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Copy, ThumbsUp, ThumbsDown, Lightbulb, Heart, MessageSquare, Target, TrendingUp, Brain, AlertCircle, Sparkles, CheckCircle, Star, AlertTriangle, BarChart, User, Shield } from 'lucide-react';
+import { ArrowLeft, Copy, Lightbulb, Heart, MessageSquare, Target, TrendingUp, Brain, AlertCircle, CheckCircle, Star, AlertTriangle, User, Shield } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useStore } from '../store/useStore';
 import InteractiveConversation from '../components/InteractiveConversation';
