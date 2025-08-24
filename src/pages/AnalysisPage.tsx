@@ -153,278 +153,253 @@ const AnalysisPage = () => {
               </a>
             </nav>
           </div>
-          <div className="md:hidden flex justify-center pb-3">
-            <nav className="flex items-center space-x-1 bg-white rounded-full p-1 shadow-sm">
-              <a className="flex flex-col items-center px-3 py-2 rounded-full transition-all duration-200 bg-blue-100 text-blue-700" href="/" data-discover="true">
-                <Heart className="w-4 h-4" />
-                <span className="text-xs font-medium mt-1">Coach</span>
-              </a>
-              <a className="flex flex-col items-center px-3 py-2 rounded-full transition-all duration-200 text-gray-600 hover:text-blue-600" href="/analysis" data-discover="true">
-                <MessageSquare className="w-4 h-4" />
-                <span className="text-xs font-medium mt-1">Analysis</span>
-              </a>
-              <a className="flex flex-col items-center px-3 py-2 rounded-full transition-all duration-200 text-gray-600 hover:text-blue-600" href="/conflict" data-discover="true">
-                <AlertTriangle className="w-4 h-4" />
-                <span className="text-xs font-medium mt-1">Conflict</span>
-              </a>
-              <a className="flex flex-col items-center px-3 py-2 rounded-full transition-all duration-200 text-gray-600 hover:text-blue-600" href="/progress" data-discover="true">
-                <TrendingUp className="w-4 h-4" />
-                <span className="text-xs font-medium mt-1">Progress</span>
-              </a>
-              <a className="flex flex-col items-center px-3 py-2 rounded-full transition-all duration-200 text-gray-600 hover:text-blue-600" href="/profile" data-discover="true">
-                <User className="w-4 h-4" />
-                <span className="text-xs font-medium mt-1">Profile</span>
-              </a>
-            </nav>
-          </div>
         </div>
       </header>
 
       <main className="pt-16">
         <div className="pt-8 pb-16 px-4 sm:px-6 lg:px-8">
-        <div className="pt-8 pb-16 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-6xl mx-auto">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center space-x-4">
-              <Link
-                to="/"
-                className="p-2 hover:bg-white/50 rounded-lg transition-colors backdrop-blur-sm"
-              >
-                <ArrowLeft className="w-5 h-5 text-gray-600" />
-              </Link>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Conversation Analysis</h1>
-                <p className="text-blue-700">Goal: <span className="font-semibold text-indigo-600 capitalize">{currentGoal}</span></p>
-              </div>
-            </div>
-          </div>
-
-          {isAnalyzing ? (
-            <div className="flex items-center justify-center py-16">
-              <div className="text-center">
-                <div className="w-16 h-16 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mx-auto mb-4"></div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Analyzing your conversation...</h3>
-                <p className="text-blue-600">Applying communication frameworks and generating personalized suggestions</p>
-              </div>
-            </div>
-          ) : (
-            analysis && (
-              <div className="grid lg:grid-cols-3 gap-8">
-              {/* Left Side - Conversation with Embedded Analysis */}
-              <div className="lg:col-span-2 space-y-6">
-                
-                {/* Suggestions Section - Now prominently displayed */}
-                <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-6 shadow-xl border-2 border-green-200">
-                  <div className="flex items-center space-x-3 mb-6">
-                    <div className="p-2 bg-green-100 rounded-lg">
-                      <Lightbulb className="w-6 h-6 text-green-600" />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bold text-green-900">Personalized Suggestions</h3>
-                      <p className="text-green-700 text-sm">Based on your goal: <span className="font-semibold capitalize">{currentGoal}</span></p>
-                    </div>
-                  </div>
-                  
-                  <div className="grid gap-4">
-                    {suggestions.map((suggestion, index) => (
-                      <div
-                        key={suggestion.id}
-                        className={`p-5 rounded-xl border-2 transition-all duration-300 cursor-pointer ${
-                          selectedSuggestion === suggestion.id
-                            ? 'border-green-400 bg-white shadow-lg transform scale-[1.02]'
-                            : 'border-green-200 bg-white hover:border-green-300 hover:shadow-md'
-                        }`}
-                        onClick={() => setSelectedSuggestion(selectedSuggestion === suggestion.id ? null : suggestion.id)}
-                      >
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="flex items-center space-x-2">
-                            <span className="w-6 h-6 bg-green-100 text-green-700 rounded-full flex items-center justify-center text-sm font-bold">
-                              {index + 1}
-                            </span>
-                            <span className="text-xs font-medium text-green-600 bg-green-100 px-2 py-1 rounded-full">
-                              {suggestion.style}
-                            </span>
-                          </div>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleCopySuggestion(suggestion.text, suggestion.id);
-                            }}
-                            className={`flex items-center space-x-1 px-3 py-1 rounded-lg text-xs font-medium transition-all duration-200 ${
-                              copiedSuggestions.has(suggestion.id)
-                                ? 'bg-green-500 text-white'
-                                : 'bg-green-100 text-green-700 hover:bg-green-200'
-                            }`}
-                          >
-                            {copiedSuggestions.has(suggestion.id) ? (
-                              <>
-                                <CheckCircle className="w-3 h-3" />
-                                <span>Copied!</span>
-                              </>
-                            ) : (
-                              <>
-                                <Copy className="w-3 h-3" />
-                                <span>Copy</span>
-                              </>
-                            )}
-                          </button>
-                        </div>
-                        <p className="text-gray-800 font-medium mb-2 leading-relaxed">"{suggestion.text}"</p>
-                        <p className="text-xs text-gray-600 mb-2">{suggestion.rationale}</p>
-                        <p className="text-xs text-green-600 font-medium">{suggestion.framework}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                
-                {/* Interactive Conversation */}
-                <InteractiveConversation 
-                  messages={parsedMessages}
-                  highlights={interactiveHighlights}
-                  suggestions={suggestions}
-                />
-                
-                {/* Embedded Patterns Detected */}
-                <div className="bg-white rounded-xl p-6 shadow-xl border border-gray-200">
-                  <div className="flex items-center space-x-2 mb-4">
-                    <Target className="w-5 h-5 text-indigo-500" />
-                    <h3 className="text-lg font-semibold text-gray-900">Patterns Detected</h3>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    {analysis.patterns && analysis.patterns.length > 0 ? analysis.patterns.map((pattern: string, index: number) => (
-                      <div key={index} className="flex items-center space-x-3 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg border border-indigo-200">
-                        <TrendingUp className="w-4 h-4 text-indigo-600" />
-                        <div className="flex-1">
-                          <span className="text-sm font-medium text-indigo-800">{pattern}</span>
-                        </div>
-                      </div>
-                    )) : (
-                      <div className="text-center py-4 text-gray-500">
-                        <p className="text-sm">No specific patterns detected. Check the interactive conversation above for highlights.</p>
-                      </div>
-                    )}
-                  </div>
+          <div className="max-w-6xl mx-auto">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center space-x-4">
+                <Link
+                  to="/"
+                  className="p-2 hover:bg-white/50 rounded-lg transition-colors backdrop-blur-sm"
+                >
+                  <ArrowLeft className="w-5 h-5 text-gray-600" />
+                </Link>
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900">Conversation Analysis</h1>
+                  <p className="text-blue-700">Goal: <span className="font-semibold text-indigo-600 capitalize">{currentGoal}</span></p>
                 </div>
               </div>
+            </div>
 
-              {/* Right Side - Analysis Components */}
-              <div className="lg:col-span-1 space-y-6">
-                {/* Emotional Tone */}
-                <div className="bg-white rounded-xl p-6 shadow-xl border border-gray-200">
-                  <div className="flex items-center space-x-2 mb-4">
-                    <Heart className="w-5 h-5 text-pink-500" />
-                    <h3 className="text-lg font-semibold text-gray-900">Emotional Tone</h3>
-                  </div>
+            {isAnalyzing ? (
+              <div className="flex items-center justify-center py-16">
+                <div className="text-center">
+                  <div className="w-16 h-16 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mx-auto mb-4"></div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Analyzing your conversation...</h3>
+                  <p className="text-blue-600">Applying communication frameworks and generating personalized suggestions</p>
+                </div>
+              </div>
+            ) : (
+              analysis && (
+                <div className="grid lg:grid-cols-3 gap-8">
+                {/* Left Side - Conversation with Embedded Analysis */}
+                <div className="lg:col-span-2 space-y-6">
                   
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between flex-wrap gap-2">
-                      <span className="text-sm font-medium text-gray-700">Overall Sentiment</span>
-                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${getSentimentColor(analysis.sentiment.score)}`}>
-                        {analysis.sentiment.label}
-                      </span>
+                  {/* Suggestions Section - Now prominently displayed */}
+                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-6 shadow-xl border-2 border-green-200">
+                    <div className="flex items-center space-x-3 mb-6">
+                      <div className="p-2 bg-green-100 rounded-lg">
+                        <Lightbulb className="w-6 h-6 text-green-600" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-green-900">Personalized Suggestions</h3>
+                        <p className="text-green-700 text-sm">Based on your goal: <span className="font-semibold capitalize">{currentGoal}</span></p>
+                      </div>
                     </div>
                     
-                    <div className="flex flex-wrap gap-2">
-                      {analysis.tone.map((tone: string, index: number) => (
-                        <span 
-                          key={index}
-                          className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium"
+                    <div className="grid gap-4">
+                      {suggestions.map((suggestion, index) => (
+                        <div
+                          key={suggestion.id}
+                          className={`p-5 rounded-xl border-2 transition-all duration-300 cursor-pointer ${
+                            selectedSuggestion === suggestion.id
+                              ? 'border-green-400 bg-white shadow-lg transform scale-[1.02]'
+                              : 'border-green-200 bg-white hover:border-green-300 hover:shadow-md'
+                          }`}
+                          onClick={() => setSelectedSuggestion(selectedSuggestion === suggestion.id ? null : suggestion.id)}
                         >
-                          {tone}
-                        </span>
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex items-center space-x-2">
+                              <span className="w-6 h-6 bg-green-100 text-green-700 rounded-full flex items-center justify-center text-sm font-bold">
+                                {index + 1}
+                              </span>
+                              <span className="text-xs font-medium text-green-600 bg-green-100 px-2 py-1 rounded-full">
+                                {suggestion.style}
+                              </span>
+                            </div>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleCopySuggestion(suggestion.text, suggestion.id);
+                              }}
+                              className={`flex items-center space-x-1 px-3 py-1 rounded-lg text-xs font-medium transition-all duration-200 ${
+                                copiedSuggestions.has(suggestion.id)
+                                  ? 'bg-green-500 text-white'
+                                  : 'bg-green-100 text-green-700 hover:bg-green-200'
+                              }`}
+                            >
+                              {copiedSuggestions.has(suggestion.id) ? (
+                                <>
+                                  <CheckCircle className="w-3 h-3" />
+                                  <span>Copied!</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Copy className="w-3 h-3" />
+                                  <span>Copy</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
+                          <p className="text-gray-800 font-medium mb-2 leading-relaxed">"{suggestion.text}"</p>
+                          <p className="text-xs text-gray-600 mb-2">{suggestion.rationale}</p>
+                          <p className="text-xs text-green-600 font-medium">{suggestion.framework}</p>
+                        </div>
                       ))}
                     </div>
                   </div>
-                </div>
-
-                {/* Key Conversation Moments */}
-                <ConversationHighlights 
-                  highlights={highlights}
-                  originalMessages={parsedMessages}
-                />
-
-                {/* Communication Framework with Examples */}
-                <div className="bg-white rounded-xl p-6 shadow-xl border border-gray-200">
-                  <div className="flex items-center space-x-2 mb-4">
-                    <Brain className="w-5 h-5 text-purple-500" />
-                    <h3 className="text-lg font-semibold text-gray-900">Communication Framework</h3>
-                  </div>
                   
-                  <div className="space-y-4">
-                    <div className="border-2 border-blue-200 rounded-xl p-4 bg-gradient-to-r from-blue-50 to-indigo-50">
-                      <h4 className="font-medium text-gray-900 mb-3">Nonviolent Communication (NVC)</h4>
-                      <div className="space-y-3 text-sm">
-                        <div>
-                          <span className="font-medium text-blue-700">Observation:</span>
-                          <p className="text-gray-600 mt-1">{analysis.frameworks.nvc.observation}</p>
-                          <p className="text-xs text-blue-600 italic mt-1">Example: "When I heard you say..."</p>
-                        </div>
-                        <div>
-                          <span className="font-medium text-green-700">Feeling:</span>
-                          <p className="text-gray-600 mt-1">{analysis.frameworks.nvc.feeling}</p>
-                          <p className="text-xs text-green-600 italic mt-1">Example: "I feel concerned because..."</p>
-                        </div>
-                        <div>
-                          <span className="font-medium text-purple-700">Need:</span>
-                          <p className="text-gray-600 mt-1">{analysis.frameworks.nvc.need}</p>
-                          <p className="text-xs text-purple-600 italic mt-1">Example: "I need to feel heard and understood"</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="border-2 border-green-200 rounded-xl p-4 bg-gradient-to-r from-green-50 to-emerald-50">
-                      <h4 className="font-medium text-gray-900 mb-3">Gottman Method</h4>
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div className="text-center">
-                          <div className="text-2xl font-bold text-blue-600">{analysis.frameworks.gottman.bids}</div>
-                          <div className="text-gray-600">Bids Made</div>
-                          <p className="text-xs text-gray-500 mt-1">Attempts to connect</p>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-2xl font-bold text-green-600">{analysis.frameworks.gottman.turning_toward}</div>
-                          <div className="text-gray-600">Turning Toward</div>
-                          <p className="text-xs text-gray-500 mt-1">Positive responses</p>
-                        </div>
-                      </div>
-                      
-                      {/* Gottman Examples */}
-                      <div className="mt-4 p-3 bg-white bg-opacity-60 rounded-lg border border-green-300">
-                        <h5 className="font-medium text-blue-900 mb-2">💡 Examples</h5>
-                        <div className="space-y-1 text-xs text-blue-800">
-                          <p><strong>Bid:</strong> "How was your day?"</p>
-                          <p><strong>Turn Toward:</strong> "It was good! Let me tell you about..."</p>
-                          <p><strong>Turn Away:</strong> "Fine." (while looking at phone)</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Risk Assessment */}
-                {analysis.risks.length > 0 && (
-                  <div className="bg-white rounded-xl p-6 shadow-xl border-l-4 border-orange-500">
+                  {/* Interactive Conversation */}
+                  <InteractiveConversation 
+                    messages={parsedMessages}
+                    highlights={interactiveHighlights}
+                    suggestions={suggestions}
+                  />
+                  
+                  {/* Embedded Patterns Detected */}
+                  <div className="bg-white rounded-xl p-6 shadow-xl border border-gray-200">
                     <div className="flex items-center space-x-2 mb-4">
-                      <AlertCircle className="w-5 h-5 text-orange-500" />
-                      <h3 className="text-lg font-semibold text-gray-900">Gentle Reminders</h3>
+                      <Target className="w-5 h-5 text-indigo-500" />
+                      <h3 className="text-lg font-semibold text-gray-900">Patterns Detected</h3>
                     </div>
                     
                     <div className="space-y-2">
-                      {analysis.risks.map((risk: string, index: number) => (
-                        <p key={index} className="text-sm text-orange-700 bg-orange-50 p-3 rounded-lg">
-                          {risk}
-                        </p>
-                      ))}
+                      {analysis.patterns && analysis.patterns.length > 0 ? analysis.patterns.map((pattern: string, index: number) => (
+                        <div key={index} className="flex items-center space-x-3 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg border border-indigo-200">
+                          <TrendingUp className="w-4 h-4 text-indigo-600" />
+                          <div className="flex-1">
+                            <span className="text-sm font-medium text-indigo-800">{pattern}</span>
+                          </div>
+                        </div>
+                      )) : (
+                        <div className="text-center py-4 text-gray-500">
+                          <p className="text-sm">No specific patterns detected. Check the interactive conversation above for highlights.</p>
+                        </div>
+                      )}
                     </div>
                   </div>
-                )}
+                </div>
+
+                {/* Right Side - Analysis Components */}
+                <div className="lg:col-span-1 space-y-6">
+                  {/* Emotional Tone */}
+                  <div className="bg-white rounded-xl p-6 shadow-xl border border-gray-200">
+                    <div className="flex items-center space-x-2 mb-4">
+                      <Heart className="w-5 h-5 text-pink-500" />
+                      <h3 className="text-lg font-semibold text-gray-900">Emotional Tone</h3>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <span className="text-sm font-medium text-gray-700">Overall Sentiment</span>
+                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${getSentimentColor(analysis.sentiment.score)}`}>
+                          {analysis.sentiment.label}
+                        </span>
+                      </div>
+                      
+                      <div className="flex flex-wrap gap-2">
+                        {analysis.tone.map((tone: string, index: number) => (
+                          <span 
+                            key={index}
+                            className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium"
+                          >
+                            {tone}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Key Conversation Moments */}
+                  <ConversationHighlights 
+                    highlights={highlights}
+                    originalMessages={parsedMessages}
+                  />
+
+                  {/* Communication Framework with Examples */}
+                  <div className="bg-white rounded-xl p-6 shadow-xl border border-gray-200">
+                    <div className="flex items-center space-x-2 mb-4">
+                      <Brain className="w-5 h-5 text-purple-500" />
+                      <h3 className="text-lg font-semibold text-gray-900">Communication Framework</h3>
+                    </div>
+                    
+                    <div className="space-y-4">
+                      <div className="border-2 border-blue-200 rounded-xl p-4 bg-gradient-to-r from-blue-50 to-indigo-50">
+                        <h4 className="font-medium text-gray-900 mb-3">Nonviolent Communication (NVC)</h4>
+                        <div className="space-y-3 text-sm">
+                          <div>
+                            <span className="font-medium text-blue-700">Observation:</span>
+                            <p className="text-gray-600 mt-1">{analysis.frameworks.nvc.observation}</p>
+                            <p className="text-xs text-blue-600 italic mt-1">Example: "When I heard you say..."</p>
+                          </div>
+                          <div>
+                            <span className="font-medium text-green-700">Feeling:</span>
+                            <p className="text-gray-600 mt-1">{analysis.frameworks.nvc.feeling}</p>
+                            <p className="text-xs text-green-600 italic mt-1">Example: "I feel concerned because..."</p>
+                          </div>
+                          <div>
+                            <span className="font-medium text-purple-700">Need:</span>
+                            <p className="text-gray-600 mt-1">{analysis.frameworks.nvc.need}</p>
+                            <p className="text-xs text-purple-600 italic mt-1">Example: "I need to feel heard and understood"</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="border-2 border-green-200 rounded-xl p-4 bg-gradient-to-r from-green-50 to-emerald-50">
+                        <h4 className="font-medium text-gray-900 mb-3">Gottman Method</h4>
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-blue-600">{analysis.frameworks.gottman.bids}</div>
+                            <div className="text-gray-600">Bids Made</div>
+                            <p className="text-xs text-gray-500 mt-1">Attempts to connect</p>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-green-600">{analysis.frameworks.gottman.turning_toward}</div>
+                            <div className="text-gray-600">Turning Toward</div>
+                            <p className="text-xs text-gray-500 mt-1">Positive responses</p>
+                          </div>
+                        </div>
+                        
+                        {/* Gottman Examples */}
+                        <div className="mt-4 p-3 bg-white bg-opacity-60 rounded-lg border border-green-300">
+                          <h5 className="font-medium text-blue-900 mb-2">💡 Examples</h5>
+                          <div className="space-y-1 text-xs text-blue-800">
+                            <p><strong>Bid:</strong> "How was your day?"</p>
+                            <p><strong>Turn Toward:</strong> "It was good! Let me tell you about..."</p>
+                            <p><strong>Turn Away:</strong> "Fine." (while looking at phone)</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Risk Assessment */}
+                  {analysis.risks.length > 0 && (
+                    <div className="bg-white rounded-xl p-6 shadow-xl border-l-4 border-orange-500">
+                      <div className="flex items-center space-x-2 mb-4">
+                        <AlertCircle className="w-5 h-5 text-orange-500" />
+                        <h3 className="text-lg font-semibold text-gray-900">Gentle Reminders</h3>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        {analysis.risks.map((risk: string, index: number) => (
+                          <p key={index} className="text-sm text-orange-700 bg-orange-50 p-3 rounded-lg">
+                            {risk}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-            )
-          )}
+              )
+            )}
+          </div>
         </div>
-      </div>
       </main>
     </div>
   );
